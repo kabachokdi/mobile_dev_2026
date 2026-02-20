@@ -28,7 +28,7 @@
 ![](./10000201000001BB00000338787925D3.png)\
 Листинг файла **activity_main.xml** с изменениями (если выполнялось инд.
 задание).
-
+```kotlin
 \<?xml version=\"1.0\" encoding=\"utf-8\"?\>
 
 \<androidx.constraintlayout.widget.ConstraintLayout
@@ -85,7 +85,7 @@ app:layout_constraintStart_toStartOf=\"parent\"
 app:layout_constraintTop_toTopOf=\"parent\" /\>
 
 \</androidx.constraintlayout.widget.ConstraintLayout\>
-
+```
 Ответы на контрольные вопросы.
 
 1\. Какие основные компоненты входят в структуру Android-проекта?
@@ -113,6 +113,7 @@ Minsdkversion -- минимальная версия android, на которо�
 
 ****AVD (Android Virtual Device)**** ---  это конфигурация виртуального
 Android-устройства, которая запускается в эмуляторе Android Studio.
+
 
 
 
