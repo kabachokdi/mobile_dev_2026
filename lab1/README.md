@@ -61,7 +61,7 @@
 Листинг файла **activity_main.xml** с изменениями (если выполнялось инд.
 задание).
 ```xml
-androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
@@ -121,6 +121,7 @@ Minsdkversion -- минимальная версия android, на которо�
 
 ****AVD (Android Virtual Device)**** ---  это конфигурация виртуального
 Android-устройства, которая запускается в эмуляторе Android Studio.
+
 
 
 
