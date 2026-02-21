@@ -61,62 +61,38 @@
 Листинг файла **activity_main.xml** с изменениями (если выполнялось инд.
 задание).
 ```xml
-<?xml version="1.0" encoding="utf-8"?>
+androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
 
-<androidx.constraintlayout.widget.ConstraintLayout
-xmlns:android="http://schemas.android.com/apk/res/android"
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/greeting"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.929" />
 
-xmlns:app="http://schemas.android.com/apk/res-auto"
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/greeting"
+        android:textSize="24sp"
+        android:textColor="@color/marine"
+        android:layout_marginTop="67dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-xmlns:tools="http://schemas.android.com/tools"
-
-android:id="@+id/main"
-
-android:layout_width="match_parent"
-
-android:layout_height="match_parent"
-
-tools:context=".MainActivity"
-
-<TextView
-
-android:layout_width="wrap_content"
-
-android:layout_height="wrap_content"
-
-android:text="@string/greeting"
-
-app:layout_constraintBottom_toBottomOf="parent"
-
-app:layout_constraintEnd_toEndOf="parent"
-
-app:layout_constraintStart_toStartOf="parent"
-
-app:layout_constraintTop_toTopOf="parent" 
-
-<TextView
-
-android:layout_width="wrap_content"
-
-android:layout_height="wrap_content"
-
-android:text="@string/greeting"
-
-android:textSize="24sp"
-
-android:textColor="@color/material_on_background_emphasis_high_type"
-
-android:layout_marginTop="67dp"
-
-app:layout_constraintBottom_toBottomOf="parent"
-
-app:layout_constraintEnd_toEndOf="parent"
-
-app:layout_constraintStart_toStartOf="parent"
-
-app:layout_constraintTop_toTopOf="parent"
-
-<androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
 ```
 Ответы на контрольные вопросы.
 
@@ -145,6 +121,7 @@ Minsdkversion -- минимальная версия android, на которо�
 
 ****AVD (Android Virtual Device)**** ---  это конфигурация виртуального
 Android-устройства, которая запускается в эмуляторе Android Studio.
+
 
 
 
