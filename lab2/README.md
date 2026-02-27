@@ -184,3 +184,5 @@ class StringUtilsTest {
 3. <br> <img width="589" height="502" alt="image" src="https://github.com/user-attachments/assets/2619d743-c3c0-4f21-a9e6-5fefa71a3f89" /><br>
 4. Так как все действия с числами с плавающей точкой происходят приближённо (с точностью до n-го знака), при сравнении достаточно близких чисел может возникать ошибочное срабатываение. Для этого используется assertEquals, который позволяет "отсечь" часть числа<br>
 5.<br><img width="254" height="172" alt="image" src="https://github.com/user-attachments/assets/2ffdf7db-d7a1-42ae-9a25-8367f00ad315" /><br>
+Выводы
+Освоены базовые элементы обработки данных в kotlin, основы применения Unit-тестов
