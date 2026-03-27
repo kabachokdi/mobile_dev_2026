@@ -146,6 +146,7 @@
 <br>
 Листинг Activity_main
 <br>
+
 ```kotlin
 package com.example.mta3
 
@@ -237,6 +238,7 @@ class MainActivity : AppCompatActivity() {
   app:layout_constraintTop_toTopOf="parent"
   app:layout_constraintStart_toEndOf="@id/otherView"
   app:layout_constraintBottom_toBottomOf="parent"
+  ```
 <br>
 ## 3. Как вынести размеры и цвета в ресурсы? Зачем это нужно?
 в файле res/values/dimens.xml
