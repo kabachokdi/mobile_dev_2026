@@ -225,36 +225,45 @@ class MainActivity : AppCompatActivity() {
 # Краткий ответ по ConstraintLayout и основам Android
 
 ## 1. ConstraintLayout vs LinearLayout
+
 - **ConstraintLayout** — гибкая компоновка с ограничениями (constraints), позволяет создавать сложные UI с плоской иерархией.
 - **Преимущества**:
   - Уменьшает вложенность → выше производительность.
   - Гибкое позиционирование (относительно родителя или других элементов).
   - Поддержка цепочек (chains), барьеров (barriers), направляющих (guidelines).
+    
 <br>
-## 2. Атрибуты `app:layout_constraint...`
+
+## 2. Атрибуты `app:layout_constraint...
 - Задают ограничения для позиционирования элемента.
 - Примеры:
+  
   ```xml
   app:layout_constraintTop_toTopOf="parent"
   app:layout_constraintStart_toEndOf="@id/otherView"
   app:layout_constraintBottom_toBottomOf="parent"
   ```
+  
 <br>
 ## 3. Как вынести размеры и цвета в ресурсы? Зачем это нужно?
 в файле res/values/dimens.xml
+
 ```xml
 <dimen name="button_width">120dp</dimen>
 ```
 в файлe colors.xml
+
 ```xml
 <color name="primary">#FF6200EE</color>
 ```
+
 Зачем:
 Единообразие стилей.
 Удобство поддержки и переиспользования.
 Поддержка разных конфигураций (темы, экраны).
 <br>
 ## 4. Каким образом можно обработать клик на кнопке в Kotlin-коде?
+
 ```kotlin
 // Вариант 1: setOnClickListener с лямбдой
 val button = findViewById<Button>(R.id.my_button)
@@ -266,8 +275,11 @@ binding.myButton.setOnClickListener { /* действия */ }
 // Вариант 3: атрибут android:onClick в XML
 fun onButtonClick(view: View) { /* действия */ }
 ```
+
 ## 5. Как добавить обработчик нажатия на ImageView?
+
 ```kotlin
+
 val imageView = findViewById<ImageView>(R.id.my_image)
 imageView.isClickable = true   // или android:clickable="true" в XML
 imageView.setOnClickListener { /* реакция */ }
