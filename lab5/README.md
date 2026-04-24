@@ -334,20 +334,34 @@ class MainActivity : AppCompatActivity() {
 
 1
 
+```kotlin
+
 val editText = findViewById<EditText>(R.id.edit_text)
 val text = editText.text.toString()
 
 2
 
+```
+
+
 Сохранить состояние в savedInstance
 Сохранение:
+
+```kotlin
+
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putInt("counter", counter)
         outState.putInt("tcounter", tcounter)
         outState.putStringArrayList("tasks", ArrayList(tasks))
     }
+
+```
+
 Восстановление:
+
+```kotlin
+
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {
         super.onRestoreInstanceState(savedInstanceState)
         counter = savedInstanceState.getInt("counter")
@@ -357,14 +371,19 @@ val text = editText.text.toString()
         updateCounterDisplay(findViewById(R.id.textCounter))
         updateTasksDisplay(findViewById<TextView>(R.id.textTasks))
     }
+
+```
+
 3
 joinToString — функция для коллекций в Kotlin. Она преобразует элементы коллекции в строку, объединяя их через указанный разделитель.
 val result = numbers.joinToString(separator = " | ") - разделитель передаётся через аргумент
 4
 list - неизменяемы список, 
 mutableList - изменяемый список
+<br>
 5
-editText.setText("")         
+editText.setText("")
+<br>
 editText.text.clear()
 Вывод:
 Проведена работа  
