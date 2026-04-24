@@ -50,6 +50,8 @@
 </div>
 Цель работы: Научиться обрабатывать пользовательский ввод, работать с состоянием (счетчик, список задач), динамически обновлять интерфейс приложения на Kotlin.
 Листинг MainActivity.xml
+<br>
+
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
@@ -191,6 +193,7 @@
 
 </LinearLayout>
 ```
+<br>
 Листинг MainActivity.kt
 ```kotlin
 package com.example.myapplication
@@ -314,6 +317,7 @@ class MainActivity : AppCompatActivity() {
 ```
 
 <img width="392" height="767" alt="image" src="https://github.com/user-attachments/assets/71d92867-6100-40de-8d26-b02192985bbc" />
+
 Ответы на вопросы:
 Как получить текст из EditText?
 Почему при повороте экрана данные (счётчик, список задач) сбрасываются? Как это можно исправить?
@@ -322,9 +326,12 @@ class MainActivity : AppCompatActivity() {
 Как очистить поле ввода после добавления задачи?
 
 1
+
 val editText = findViewById<EditText>(R.id.edit_text)
 val text = editText.text.toString()
+
 2
+
 Сохранить состояние в savedInstance
 Сохранение:
     override fun onSaveInstanceState(outState: Bundle) {
