@@ -339,10 +339,9 @@ class MainActivity : AppCompatActivity() {
 val editText = findViewById<EditText>(R.id.edit_text)
 val text = editText.text.toString()
 
-2
-
 ```
 
+2
 
 Сохранить состояние в savedInstance
 Сохранение:
