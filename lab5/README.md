@@ -195,6 +195,7 @@
 ```
 <br>
 Листинг MainActivity.kt
+<br>
 ```kotlin
 package com.example.myapplication
 
@@ -314,8 +315,9 @@ class MainActivity : AppCompatActivity() {
         textView.text = getString(R.string.counter_total_text, tcounter)
     }
 }
-```
 
+```
+<br>
 <img width="392" height="767" alt="image" src="https://github.com/user-attachments/assets/71d92867-6100-40de-8d26-b02192985bbc" />
 
 Ответы на вопросы:
