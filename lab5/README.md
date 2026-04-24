@@ -323,7 +323,8 @@ class MainActivity : AppCompatActivity() {
 
 <br>
 
-<img width="392" height="767" alt="image" src="https://github.com/user-attachments/assets/71d92867-6100-40de-8d26-b02192985bbc" />
+<img width="390" height="772" alt="image" src="https://github.com/user-attachments/assets/734b3fd2-511e-4589-9a03-715649bb70c2" />
+
 
 Ответы на вопросы:
 Как получить текст из EditText?
@@ -374,17 +375,21 @@ val text = editText.text.toString()
 ```
 
 3
+
 joinToString — функция для коллекций в Kotlin. Она преобразует элементы коллекции в строку, объединяя их через указанный разделитель.
 
 val result = numbers.joinToString(separator = " | ") - разделитель передаётся через аргумент
 
 4
+
 list - неизменяемы список, 
 
 mutableList - изменяемый список
 
 <br>
+
 5
+
 
 editText.setText("")
 
