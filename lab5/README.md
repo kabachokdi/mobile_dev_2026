@@ -196,7 +196,10 @@
 <br>
 Листинг MainActivity.kt
 <br>
+
+
 ```kotlin
+
 package com.example.myapplication
 
 import android.os.Bundle
