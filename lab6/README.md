@@ -1,71 +1,66 @@
-# Лабораторная работа №6
-## Отображение списка задач из предыдущей лабораторной в красивых карточках
+<div align="center">
 
-**Длительность:** 1 час 30 минут  
-**Цель работы:** Научиться использовать `RecyclerView` для отображения списка данных, освоить создание адаптера и ViewHolder, применить `CardView` для оформления элементов списка.
+**МИНИСТЕРСТВО НАУКИ И ВЫСШЕГО ОБРАЗОВАНИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ**  
+**ФЕДЕРАЛЬНОЕ ГОСУДАРСТВЕННОЕ БЮДЖЕТНОЕ ОБРАЗОВАТЕЛЬНОЕ УЧРЕЖДЕНИЕ ВЫСШЕГО ОБРАЗОВАНИЯ**  
+**«САХАЛИНСКИЙ ГОСУДАРСТВЕННЫЙ УНИВЕРСИТЕТ»**
 
----
+<br>
+<br>
 
-## 1. Теоретическая справка
+Институт естественных наук и техносферной безопасности  
+Кафедра информатики  
+Бычков Дмитрий Николаевич
 
-### 1.1. RecyclerView
-`RecyclerView` – это современный и эффективный компонент для отображения больших списков. Он переиспользует (recycler) элементы списка при прокрутке, что экономит ресурсы.
-x
-Для работы `RecyclerView` необходимы:
-- **LayoutManager** – отвечает за расположение элементов (линейно, сеткой, горизонтально). Обычно используется `LinearLayoutManager`.
-- **Adapter** – создаёт элементы списка и связывает данные с View.
-- **ViewHolder** – кэширует ссылки на вьюхи элемента для быстрого доступа.
+<br>
+<br>
+<br>
+<br>
 
-### 1.2. CardView
-`CardView` – это компонент из библиотеки Material, который реализует карточку с закруглёнными углами и тенью. Используется для создания красивого оформления каждого элемента списка.
+Лабораторная работа №6
+Отображение списка задач из предыдущей лабораторной в красивых карточках
+01.03.02 Прикладная математика и информатика  
+3 Курс
 
-Подключение зависимости (если не добавлена):
-```gradle
-dependencies {
-    implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'androidx.recyclerview:recyclerview:1.3.2'
-}
-```
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
 
-### 1.3. Адаптер
-Адаптер наследуется от `RecyclerView.Adapter<ViewHolder>` и переопределяет методы:
-- `onCreateViewHolder` – создаёт новый элемент (инфлейтит layout).
-- `onBindViewHolder` – заполняет элемент данными.
-- `getItemCount` – возвращает размер списка.
+<div align="right">
+Научный руководитель<br>
+Соболев Евгений Игоревич
+</div>
 
-### 1.4. Data class для задачи
-В предыдущей работе мы использовали список строк. Теперь лучше создать класс задачи с дополнительными полями (например, выполнена/не выполнена), но для простоты оставим строку, но обернём в карточку.
+<br>
+<br>
+<br>
 
----
+г. Южно-Сахалинск  
+2026 г.
 
-## 2. Оборудование и программное обеспечение
+</div>
+<br>
 
-- Персональный компьютер с ОС Windows / macOS / Linux.
-- Android Studio с проектом из лабораторной работы №5 (можно использовать его же, скопировав или продолжив).
-- Эмулятор или реальное устройство.
+Цель работы: Научиться использовать RecyclerView для отображения списка данных, освоить создание адаптера и ViewHolder, применить CardView для оформления элементов списка.
+<br>
 
----
 
-## 3. Порядок выполнения работы
+Листинг файла item_task.xml.
 
-### Этап 1. Подготовка проекта (5 мин)
 
-Откройте проект `TodoApp`, созданный в лабораторной работе №5. Если его нет, создайте новый проект с Empty Activity и повторите код из Лаб.5 (счётчик, поле ввода, список задач). Либо можно упростить и оставить только функционал списка задач.
-
-Убедитесь, что в файле `build.gradle` (Module) добавлены зависимости (обычно они уже есть, но проверим):
-```gradle
-dependencies {
-    implementation 'androidx.recyclerview:recyclerview:1.3.2'
-    implementation 'androidx.cardview:cardview:1.0.0'
-}
-```
-Если нет – добавьте и синхронизируйте проект.
-
-### Этап 2. Создание layout для элемента списка (10 мин)
-
-Создайте новый файл разметки `item_task.xml` в папке `res/layout`. Это будет карточка задачи.
+<br>
 
 ```xml
+
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -73,6 +68,7 @@ dependencies {
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
+
     app:cardCornerRadius="8dp"
     app:cardElevation="4dp"
     app:cardBackgroundColor="#FFFFFF">
@@ -84,6 +80,13 @@ dependencies {
         android:padding="16dp">
 
         <TextView
+            android:id="@+id/TaskHeader"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="18sp"
+            android:textColor="#333333"/>
+        <TextView
             android:id="@+id/textTask"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -93,23 +96,28 @@ dependencies {
 
         <CheckBox
             android:id="@+id/checkTask"
+            android:checked="false"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
+
 
     </LinearLayout>
 
 </androidx.cardview.widget.CardView>
+
 ```
 
-Этот элемент содержит текст задачи и чекбокс для отметки выполнения. Чекбокс пока не будем обрабатывать, но он добавит интерактивности.
 
-### Этап 3. Создание адаптера (15 мин)
+<br>
 
-Создайте класс `TaskAdapter` в пакете `com.example.todoapp` (или в отдельном пакете `adapter`).
+Листинг класса TaskAdapter.
+
 
 ```kotlin
-package com.example.todoapp
 
+package com.example.myapplication123123123123
+
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -117,123 +125,150 @@ import android.widget.CheckBox
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-class TaskAdapter(private val tasks: MutableList<String>) :
+class TaskAdapter(private  var taskheaders: MutableList<String>, private var tasks: MutableList<String>,
+                  private val onItemLongClick: (Int) -> Unit,
+                  private val onCheck: (Boolean) -> Unit) :
     RecyclerView.Adapter<TaskAdapter.TaskViewHolder>() {
+
 
     // ViewHolder хранит ссылки на элементы внутри карточки
     class TaskViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val textHeader: TextView = itemView.findViewById(R.id.TaskHeader)
         val textTask: TextView = itemView.findViewById(R.id.textTask)
         val checkTask: CheckBox = itemView.findViewById(R.id.checkTask)
+
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_task, parent, false)
-        return TaskViewHolder(view)
+       val hldr = TaskViewHolder(view)
+
+        return hldr
     }
 
     override fun onBindViewHolder(holder: TaskViewHolder, position: Int) {
         val task = tasks[position]
+        val header = taskheaders[position]
+
+        holder.textHeader.text = header
         holder.textTask.text = task
+        if (holder.checkTask.isChecked){
+        holder.checkTask.isChecked = false
+        }
+        if (position % 2 == 0) {
+            // Четная позиция
+            holder.textTask.setBackgroundResource(R.color.EvenlyRed)
+            holder.itemView.setBackgroundResource(R.color.EvenlyBlue)
+            holder.textTask.setTextColor(Color.WHITE)
+
+        } else {
+            // Нечетная позиция
+            holder.textTask.setBackgroundResource(R.color.UnevenlyGreen)
+            holder.textTask.setTextColor(Color.BLACK)
+            holder.itemView.setBackgroundResource(R.color.UnvenlyPurple)
+        }
         // Обработка чекбокса (опционально)
         holder.checkTask.setOnCheckedChangeListener { _, isChecked ->
             // Можно добавить логику отметки выполнения, например, перечеркивание текста
             if (isChecked) {
                 holder.textTask.paintFlags = holder.textTask.paintFlags or android.graphics.Paint.STRIKE_THRU_TEXT_FLAG
+                onCheck(isChecked)
+
             } else {
                 holder.textTask.paintFlags = holder.textTask.paintFlags and android.graphics.Paint.STRIKE_THRU_TEXT_FLAG.inv()
+
+                onCheck(isChecked)
             }
         }
+        holder.itemView.setOnLongClickListener {
+            onItemLongClick(position)
+            true
+        }
+
     }
 
     override fun getItemCount(): Int = tasks.size
 
+
     // Метод для обновления списка
-    fun updateData(newTasks: List<String>) {
-        tasks.clear()
-        tasks.addAll(newTasks)
+    fun updateData(newHeades: List<String>, newTasks: List<String>) {
+    //     tasks.clear()
+     //   tasks.addAll(newTasks)
+        taskheaders = newHeades as MutableList<String>
+        tasks = newTasks as MutableList<String>
         notifyDataSetChanged()
     }
 }
+
 ```
 
-### Этап 4. Обновление разметки главного экрана (10 мин)
 
-В `activity_main.xml` замените старый `TextView` для списка задач на `RecyclerView`. Также можно оставить поле ввода и кнопку добавления.
 
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+<br>
+Листинг MainActivity.kt с изменениями.
+<br>
 
-    <!-- Поле ввода и кнопка добавления (как в Лаб.5) -->
-    <EditText
-        android:id="@+id/editTextTask"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Введите задачу"
-        android:layout_marginBottom="8dp"/>
-
-    <Button
-        android:id="@+id/buttonAddTask"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Добавить задачу"
-        android:layout_marginBottom="16dp"/>
-
-    <!-- RecyclerView для списка задач -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewTasks"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
-
-</LinearLayout>
-```
-
-### Этап 5. Настройка RecyclerView в MainActivity (15 мин)
-
-В `MainActivity.kt` удалите старый `TextView` для задач и добавьте `RecyclerView`, адаптер и `LinearLayoutManager`.
 
 ```kotlin
-package com.example.todoapp
 
+package com.example.myapplication123123123123
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
 class MainActivity : AppCompatActivity() {
-
+    private var done = 0
     private val tasks = mutableListOf<String>()
+    private val tasksHeaders = mutableListOf<String>()
     private lateinit var adapter: TaskAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
+        val readycount = findViewById<TextView>(R.id.readycount)
         val editTextTask = findViewById<EditText>(R.id.editTextTask)
+        val editTextheader = findViewById<EditText>(R.id.editTextheader)
         val buttonAddTask = findViewById<Button>(R.id.buttonAddTask)
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerViewTasks)
 
         // Настройка RecyclerView
         recyclerView.layoutManager = LinearLayoutManager(this)
-        adapter = TaskAdapter(tasks)
+        adapter = TaskAdapter(tasksHeaders,tasks,
+            { position ->
+                tasksHeaders.removeAt(position)
+                tasks.removeAt(position)
+                adapter.updateData(tasksHeaders,tasks)
+                if(done>=1){
+                done -=1}
+                readycount.text = $"сделано задач ${done}"
+            adapter.notifyItemRemoved(position)
+        },{chkd -> if(chkd){
+
+            done+=1
+
+        }else{
+            if (done>=1)
+                done -=1
+        }
+                readycount.text = $"сделано задач ${done}"})
         recyclerView.adapter = adapter
 
         // Добавление задачи
         buttonAddTask.setOnClickListener {
             val task = editTextTask.text.toString()
+            val header = editTextheader.text.toString()
             if (task.isNotBlank()) {
                 tasks.add(task)
+                tasksHeaders.add(header)
                 adapter.notifyItemInserted(tasks.size - 1) // более эффективно, чем notifyDataSetChanged
                 editTextTask.text.clear()
+                editTextheader.text.clear()
             } else {
                 Toast.makeText(this, "Введите задачу", Toast.LENGTH_SHORT).show()
             }
@@ -242,9 +277,14 @@ class MainActivity : AppCompatActivity() {
         // Восстановление данных при повороте (опционально, см. Лаб.5)
         if (savedInstanceState != null) {
             val savedTasks = savedInstanceState.getStringArrayList("tasks")
+            val savedheaders = savedInstanceState.getStringArrayList("headers")
             if (savedTasks != null) {
                 tasks.clear()
                 tasks.addAll(savedTasks)
+                tasksHeaders.clear()
+                if (savedheaders != null) {
+                    tasksHeaders.addAll(savedheaders)
+                }
                 adapter.notifyDataSetChanged()
             }
         }
@@ -252,104 +292,64 @@ class MainActivity : AppCompatActivity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
+        outState.putStringArrayList("headers", ArrayList(tasksHeaders))
         outState.putStringArrayList("tasks", ArrayList(tasks))
     }
 }
+
 ```
+<br>
 
-### Этап 6. Запуск и тестирование (10 мин)
 
-Запустите приложение. Добавьте несколько задач. Убедитесь, что они отображаются в виде карточек, каждая с чекбоксом. Проверьте, что чекбокс перечёркивает текст при отметке (если добавили эту логику).
+Скриншот работающего приложения с несколькими карточками.
+<img width="720" height="1440" alt="image" src="https://github.com/user-attachments/assets/31e18635-bc91-464f-81ae-42e45610a411" />
 
-### Этап 7. Добавление функциональности удаления (опционально, 15 мин)
 
-Добавьте возможность удалять задачу свайпом или по долгому нажатию. Например, удаление при долгом нажатии на карточку.
+<br>
 
-В адаптере добавьте интерфейс обратного вызова:
+Ответы на контрольные вопросы
+1 Для чего нужен RecyclerView? Чем он лучше ListView?
 
-```kotlin
-class TaskAdapter(
-    private val tasks: MutableList<String>,
-    private val onItemLongClick: (Int) -> Unit
-) : RecyclerView.Adapter<TaskAdapter.TaskViewHolder>() {
-    // ...
-    override fun onBindViewHolder(holder: TaskViewHolder, position: Int) {
-        // ...
-        holder.itemView.setOnLongClickListener {
-            onItemLongClick(position)
-            true
-        }
-    }
-}
-```
+RecyclerView — это гибкий и производительный контейнер для отображения больших наборов данных в виде списка, сетки или кастомной компоновки. Он был создан как современная замена ListView.
+Лучше за счёт оптимизации - ячейки переиспользуются,
+можно обновлять данные только частично за счёт частичных уведомлений  (notifyItemInserted, notifyItemChanged с полезной нагрузкой и т.д.)
+Анимации из коробки (item animator)
+<br>
+2 Какие компоненты необходимы для работы RecyclerView?
+Обязательные компоненты:
 
-В `MainActivity` при создании адаптера передайте лямбду:
-```kotlin
-adapter = TaskAdapter(tasks) { position ->
-    tasks.removeAt(position)
-    adapter.notifyItemRemoved(position)
-}
-```
+Сам RecyclerView в разметке.
 
-Не забудьте добавить импорты и обновить конструктор.
+Адаптер (наследник RecyclerView.Adapter) — связывает данные с визуальными элементами, создаёт и заполняет ViewHolder.
 
-### Этап 8. Дополнительные улучшения (оставшееся время)
+ViewHolder — хранит ссылки на элементы интерфейса для каждой ячейки, позволяет избежать многократного поиска по id.
 
-- Добавьте разные цвета для карточек в зависимости от четности позиции.
-- Добавьте анимацию появления/удаления.
-- Используйте `SwipeToDelete` через `ItemTouchHelper` (сложнее, можно показать, но, вероятно, не успеют).
+LayoutManager — определяет, как элементы располагаются на экране (список, сетка и т.д.). Без него RecyclerView не отобразит данные.
 
----
+Дополнительные (опционально):
 
-## 4. Индивидуальные задания (вариативно)
+ItemDecoration — отступы, разделители, декоративные элементы.
 
-Выберите одно из заданий для самостоятельной доработки:
+ItemAnimator — анимации добавления, удаления, перемещения.
 
-1. **Удаление свайпом**  
-   Реализуйте удаление задачи свайпом влево/вправо с помощью `ItemTouchHelper.SimpleCallback`. При свайпе задача удаляется, показывается `Snackbar` с возможностью отмены.
+ItemTouchHelper — обработка свайпов и перетаскивания.
+<br>
+3. Что такое ViewHolder и для чего он используется?
+ViewHolder — объект, кеширующий ссылки на View-элементы одной ячейки.
+Назначение: избежать повторных вызовов findViewById() при переиспользовании макета, что даёт прирост производительности и экономию памяти.
+<br>
+4. Чем отличается notifyDataSetChanged() от notifyItemInserted()?
+notifyDataSetChanged() — полное обновление всех видимых элементов, без анимаций. Тяжёлая операция.
 
-2. **Редактирование по клику**  
-   Сделайте так, чтобы при клике на задачу открывался диалог с предзаполненным текстом для редактирования. После подтверждения текст задачи обновляется.
+notifyItemInserted(pos) — вставка одного элемента с анимацией, перерисовываются только затронутые элементы. Лучше для точечных изменений.
 
-3. **Счетчик выполненных задач**  
-   Добавьте в шапку экрана `TextView`, показывающий количество выполненных задач (отмеченных чекбоксов). Обновляйте его при каждом изменении состояния чекбокса.
+<br>
 
-4. **Разделители и заголовки**  
-   Добавьте разделение задач по категориям (например, «Работа», «Личное») с заголовками секций. Для этого потребуется использовать разные типы View в адаптере.
+5. Как добавить обработку кликов на элементы RecyclerView?
+Передайте лямбду или интерфейс в адаптер. В onBindViewHolder() установите setOnClickListener на корневое View и вызывайте переданный колбэк, пробрасывая данные или позицию.
+Пример: holder.itemView.setOnClickListener { onItemClick(item) }.
+Для кликов по отдельным элементам ячейки — аналогично, но слушатель вешается на конкретную View внутри ViewHolder.
 
----
+<br>
 
-## 5. Контрольные вопросы
-
-1. Для чего нужен `RecyclerView`? Чем он лучше `ListView`?
-2. Какие компоненты необходимы для работы `RecyclerView`?
-3. Что такое `ViewHolder` и для чего он используется?
-4. Чем отличается `notifyDataSetChanged()` от `notifyItemInserted()`?
-5. Как добавить обработку кликов на элементы `RecyclerView`?
-
----
-
-## 6. Требования к отчёту
-
-Отчёт должен содержать:
-- Титульный лист с названием работы, ФИО, группой.
-- Цель работы.
-- Листинг файла `item_task.xml`.
-- Листинг класса `TaskAdapter`.
-- Листинг `MainActivity.kt` с изменениями.
-- Скриншот работающего приложения с несколькими карточками.
-- Ответы на контрольные вопросы.
-- Вывод по работе.
-
----
-
-## 7. Возможные ошибки и их решение
-
-- **RecyclerView не отображается** – проверьте, что установлен LayoutManager и адаптер привязан.
-- **При добавлении задачи список не обновляется** – убедитесь, что после изменения списка вызван `adapter.notifyItemInserted()` или `notifyDataSetChanged()`.
-- **Чекбокс перестаёт перечёркивать текст после прокрутки** – это из-за переиспользования ViewHolder; нужно сохранять состояние чекбокса в модели данных. Для простоты можно игнорировать или сохранять отдельный список Boolean.
-- **При удалении позиция сбивается** – если используете удаление через `notifyItemRemoved`, убедитесь, что индекс корректен и список обновлён до уведомления.
-
----
-
-**Успешной работы!**
+Выводы: был освоен современный способ представления массивов данных
