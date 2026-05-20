@@ -58,6 +58,8 @@
 листниг ViewModel
 (в 7 был реализован parceable dataclass)
 <br>
+
+
 ```kotlin
 package com.example.myapplication
 
@@ -102,9 +104,13 @@ class MainViewModel : ViewModel() {
 
 }
 ```
+
+
 <br>
 Листинг main
 <br>
+
+
 ```kotlin
 package com.example.myapplication
 import android.app.Activity
@@ -249,9 +255,11 @@ class MainActivity : AppCompatActivity() {
     }*/
 }
 ```
+
 <br>
 Листинг Адаптера
 <br>
+
 ```kotlin
 
 import android.graphics.Color
@@ -349,6 +357,7 @@ class TaskAdapter(private var tasks: List<Task>,
     }
 }
 ```
+
 <br>
 <img width="435" height="874" alt="image" src="https://github.com/user-attachments/assets/172e06d2-f5b6-4bc0-bedb-2a696dc338a0" />
 <img width="549" height="275" alt="image" src="https://github.com/user-attachments/assets/f845faac-0839-4e29-9fb9-1138ca2a32d2" />
@@ -361,7 +370,8 @@ ViewModel хранит UI-данные и живёт дольше Activity/Fragm
 
 Гарантирует автоматическую очистку (onCleared) при финише владельца, предотвращая утечки.
 <br>
-##2 Чем StateFlow отличается от LiveData? В каких случаях предпочтительнее использовать StateFlow?
+
+## 2 Чем StateFlow отличается от LiveData? В каких случаях предпочтительнее использовать StateFlow?
 StateFlow и LiveData делают одно и то-же, но StateFlow работает асинхронно, а так - же имеет больше встроенного функционала. StateFlow кроссплатформенный, тогда как LiveData только под андроид
 Когда StateFlow предпочтительнее:
 
@@ -371,13 +381,16 @@ StateFlow и LiveData делают одно и то-же, но StateFlow раб�
 
 Кроссплатформенная разработка (Kotlin Multiplatform).
 <br>
-##3 Что такое lifecycleScope и repeatOnLifecycle? Зачем они нужны при подписке на StateFlow?
+
+## 3 Что такое lifecycleScope и repeatOnLifecycle? Зачем они нужны при подписке на StateFlow?
 lifecycleScope — это область видимости (scope) корутины, привязанная к жизненному циклу компонента (Activity или Fragment). Корутины, запущенные в этом скоупе, автоматически отменяются (cancels), когда компонент уничтожается (onDestroy).
 repeatOnLifecycle(state) — это функция-расширение, которая запускает переданный блок кода в новой корутине, когда жизненный цикл достигает нужного состояния (например, Lifecycle.State.STARTED). Как только состояние падает ниже заданного (например, при переходе приложения в фон, когда вызывается onStop), эта внутренняя корутина автоматически отменяется. Когда пользователь возвращается, корутина перезапускается.
 <br>
-##4 Как обновить данные в StateFlow?
+
+## 4 Как обновить данные в StateFlow?
 StateFlow представлен двумя интерфейсами: StateFlow<T> (только для чтения) и MutableStateFlow<T> (для изменения). Для обновления данных используется MutableStateFlow
 <br>
+
 ```kotlin
 private val _state = MutableStateFlow(initialValue)
 val state: StateFlow<UiState> = _state
@@ -386,8 +399,10 @@ fun updateData(newValue: UiState) {
     _state.value = newValue
 }
 ```
+
 <br>
-##5 Какие преимущества даёт вынос логики в ViewModel с точки зрения тестирования?
+
+## 5 Какие преимущества даёт вынос логики в ViewModel с точки зрения тестирования?
 ViewModel спроектирована так, что её можно легко тестировать изолированно, без реального Android-окружения. Вся логика (загрузка данных, обработка ошибок, преобразования, управление состоянием UI) сосредоточена в ViewModel. Тесты проверяют именно бизнес-правила, а не взаимодействие с Android-фреймворком.
 <br>
 Вывод:  изучены архитектурный компонент ViewModel и реактивный поток StateFlow, а также способы их интеграции с жизненным циклом Activity. Практически реализован перенос логики управления списком задач из MainActivity в выделенный класс MainViewModel, что позволило отделить бизнес-логику и состояние UI от слоя представления.
