@@ -1,101 +1,65 @@
-# Лабораторная работа №8
-## Перенос логики списка задач из Activity в ViewModel. Использование StateFlow для хранения состояния
+<div align="center">
 
-**Длительность:** 1 час 30 минут  
-**Цель работы:** Изучить архитектурный компонент ViewModel, научиться выносить логику и состояние UI из Activity, использовать StateFlow для реактивного обновления данных, обеспечить сохранение состояния при изменении конфигурации.
+**МИНИСТЕРСТВО НАУКИ И ВЫСШЕГО ОБРАЗОВАНИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ**  
+**ФЕДЕРАЛЬНОЕ ГОСУДАРСТВЕННОЕ БЮДЖЕТНОЕ ОБРАЗОВАТЕЛЬНОЕ УЧРЕЖДЕНИЕ ВЫСШЕГО ОБРАЗОВАНИЯ**  
+**«САХАЛИНСКИЙ ГОСУДАРСТВЕННЫЙ УНИВЕРСИТЕТ»**
 
----
+<br>
+<br>
 
-## 1. Теоретическая справка
+Институт естественных наук и техносферной безопасности  
+Кафедра информатики  
+Бычков Дмитрий Николаевич
 
-### 1.1. ViewModel
-`ViewModel` – это компонент архитектуры Android, предназначенный для хранения и управления данными, связанными с UI, с учётом жизненного цикла. ViewModel переживает повороты экрана и другие изменения конфигурации, что предотвращает потерю данных.
+<br>
+<br>
+<br>
+<br>
 
-Преимущества использования ViewModel:
-- Разделение ответственности (UI не занимается загрузкой/хранением данных).
-- Устойчивость к изменениям конфигурации.
-- Упрощение тестирования (логика изолирована от Android-зависимостей).
+Лабораторная работа №8
+Перенос логики списка задач из Activity в ViewModel. Использование StateFlow для хранения состояния
+01.03.02 Прикладная математика и информатика  
+3 Курс
 
-### 1.2. StateFlow
-`StateFlow` – это поток данных из библиотеки Kotlin Coroutines, который всегда хранит последнее значение и уведомляет подписчиков о новых значениях. Является отличной альтернативой `LiveData` в чисто Kotlin-проектах, особенно при использовании корутин.
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
 
-Особенности:
-- Холодный поток превращается в горячий: `StateFlow` всегда активен.
-- Имеет текущее значение (`value`).
-- Поддерживает корутины и операторы преобразования.
+<div align="right">
+Научный руководитель<br>
+Соболев Евгений Игоревич
+</div>
 
-Для создания StateFlow обычно используют `MutableStateFlow` с начальным значением и предоставляют неизменяемый `StateFlow` наружу.
+<br>
+<br>
+<br>
 
-### 1.3. Зависимости
-Для использования ViewModel и StateFlow добавьте в `build.gradle` (Module) следующие зависимости:
-```gradle
-dependencies {
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
-}
-```
-Также требуется плагин `kotlin-kapt` для работы с lifecycle (не обязательно для базового использования).
+г. Южно-Сахалинск  
+2026 г.
 
-### 1.4. Сбор и подписка в Activity
-В Activity для получения ViewModel используется делегат `by viewModels()`. Для подписки на StateFlow в жизненном цикле Activity применяется `lifecycleScope` и `repeatOnLifecycle`.
-
-Пример:
+</div>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+листниг ViewModel
+(в 7 был реализован parceable dataclass)
+<br>
 ```kotlin
-class MainActivity : AppCompatActivity() {
-    private val viewModel: MainViewModel by viewModels()
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.tasks.collect { tasks ->
-                    // обновление адаптера
-                }
-            }
-        }
-    }
-}
-```
-
----
-
-## 2. Оборудование и программное обеспечение
-
-- Персональный компьютер с ОС Windows / macOS / Linux.
-- Android Studio с проектом `TodoApp` (результат выполнения лабораторной работы №7).
-- Эмулятор или реальное устройство.
-
----
-
-## 3. Порядок выполнения работы
-
-### Этап 1. Подготовка проекта (5 мин)
-
-Откройте проект `TodoApp`, который был создан в лабораторной работе №7. Убедитесь, что проект компилируется и работает: список задач отображается, по клику открывается экран деталей.
-
-### Этап 2. Добавление необходимых зависимостей (5 мин)
-
-Откройте файл `app/build.gradle` и убедитесь, что в разделе `dependencies` присутствуют следующие строки (если нет – добавьте и выполните Sync):
-
-```gradle
-dependencies {
-    // ... другие зависимости
-
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
-}
-```
-
-### Этап 3. Создание ViewModel (15 мин)
-
-Создайте новый класс `MainViewModel` в пакете `com.example.todoapp` (или в отдельном пакете `viewmodel`).
-
-```kotlin
-package com.example.todoapp
+package com.example.myapplication
 
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -105,13 +69,13 @@ import kotlinx.coroutines.flow.asStateFlow
 class MainViewModel : ViewModel() {
 
     // Приватный изменяемый StateFlow с начальным значением (пустой список)
-    private val _tasks = MutableStateFlow<List<String>>(emptyList())
+    private val _tasks = MutableStateFlow<List<Task>>(emptyList())
 
     // Публичный неизменяемый StateFlow для подписки из UI
-    val tasks: StateFlow<List<String>> = _tasks.asStateFlow()
+    val tasks: StateFlow<List<Task>> = _tasks.asStateFlow()
 
     // Добавление новой задачи
-    fun addTask(task: String) {
+    fun addTask(task: Task) {
         val currentList = _tasks.value.toMutableList()
         currentList.add(task)
         _tasks.value = currentList
@@ -127,7 +91,7 @@ class MainViewModel : ViewModel() {
     }
 
     // Обновление текста задачи
-    fun updateTask(index: Int, newText: String) {
+    fun updateTask(index: Int, newText: Task) {
         val currentList = _tasks.value.toMutableList()
         if (index in currentList.indices) {
             currentList[index] = newText
@@ -135,71 +99,115 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    // Вспомогательный метод для инициализации тестовыми данными (если нужно)
-    fun loadTestData() {
-        _tasks.value = listOf(
-            "Купить продукты",
-            "Сделать ДЗ по Android",
-            "Позвонить маме",
-            "Записаться к врачу"
-        )
-    }
+
 }
 ```
-
-### Этап 4. Рефакторинг MainActivity (20 мин)
-
-В `MainActivity.kt` удалите объявление `tasks` как `mutableListOf`. Получите ViewModel с помощью делегата `by viewModels()`. Подпишитесь на `viewModel.tasks` и обновляйте адаптер при изменениях. Измените логику добавления задачи – вместо прямого добавления в список вызывайте `viewModel.addTask()`.
-
-Пример итогового кода `MainActivity.kt`:
-
+<br>
+Листинг main
+<br>
 ```kotlin
-package com.example.todoapp
-
+package com.example.myapplication
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.coroutines.launch
 
+
+import kotlinx.coroutines.launch
 class MainActivity : AppCompatActivity() {
+    private var doned = 0
+    //private val tasks = mutableListOf<Task>()
+    private var tasks = emptyList<Task>()
+    private lateinit var adapter: TaskAdapter
+    private lateinit var  Detailslauncher: ActivityResultLauncher<Intent>
 
     private val viewModel: MainViewModel by viewModels()
-    private lateinit var adapter: TaskAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
+        val readycount = findViewById<TextView>(R.id.readycount)
         val editTextTask = findViewById<EditText>(R.id.editTextTask)
+        val editTextheader = findViewById<EditText>(R.id.editTextheader)
         val buttonAddTask = findViewById<Button>(R.id.buttonAddTask)
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerViewTasks)
+        doned=viewModel.tasks.value.count{ item -> item.done }
+        readycount.text = $"сделано задач ${doned}"
+
+        Detailslauncher  = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
+                result ->
+            if (result.resultCode== Activity.RESULT_CANCELED){
+                viewModel.deleteTask(result.data?.getIntExtra("pos",0) ?:0)
+                //tasks.removeAt(result.data?.getIntExtra("pos", 0) ?: 0)
+                adapter.updateData(viewModel.tasks.value)
+                doned=viewModel.tasks.value.count{ item -> item.done }
+                readycount.text = $"сделано задач ${doned}"
+                adapter.notifyItemRemoved(result.data?.getIntExtra("pos", 0) ?: 0)
+                Toast.makeText(this, "Задача удалена", Toast.LENGTH_SHORT).show()
+            }
+            if (result.resultCode == 3){
+               // viewModel.deleteTask(result.data?.getIntExtra("pos",0) ?:0)
+                //tasks.removeAt(result.data?.getIntExtra("pos", 0) ?: 0)
+               val newTask = result.data?.getParcelableExtra<Task>("nw") ?:viewModel.tasks.value[result.data?.getIntExtra("pos", 0) ?: 0]
+                viewModel.updateTask(result.data?.getIntExtra("pos", 0) ?: 0,newTask)
+                adapter.updateData(viewModel.tasks.value)
+               // doned=viewModel.tasks.value.count{ item -> item.done }
+               // readycount.text = $"сделано задач ${doned}"
+               // adapter.notifyItemRemoved(result.data?.getIntExtra("pos", 0) ?: 0)
+               Toast.makeText(this, "Задача изменена", Toast.LENGTH_SHORT).show()
+            }
+        }
+
 
         // Настройка RecyclerView
         recyclerView.layoutManager = LinearLayoutManager(this)
-        adapter = TaskAdapter(
-            tasks = emptyList(), // адаптер будет обновляться через submitList или подобное
-            onItemClick = { position ->
-                val taskText = viewModel.tasks.value[position]
-                val intent = Intent(this, DetailActivity::class.java)
-                intent.putExtra("task_text", taskText)
-                startActivity(intent)
-            },
-            onItemLongClick = { position ->
+        adapter = TaskAdapter(emptyList(),
+
+            { position ->
                 viewModel.deleteTask(position)
+              //  tasks.removeAt(position)
+                adapter.updateData(viewModel.tasks.value)
+                doned=viewModel.tasks.value.count { item -> item.done }
+                readycount.text = $"сделано задач ${doned}"
+                adapter.notifyItemRemoved(position)
                 Toast.makeText(this, "Задача удалена", Toast.LENGTH_SHORT).show()
-            }
-        )
+            },
+            ///
+            { chk,position->
+
+
+               viewModel.taskState(position,chk)
+                doned=viewModel.tasks.value.count { item -> item.done }
+                readycount.text = $"сделано задач ${doned}"},
+
+
+
+            {position ->
+               // val taskText = tasks[position]
+                val intent = Intent(this, DetailActivity::class.java)
+                intent.putExtra("task", viewModel.tasks.value[position])
+                intent.putExtra("pos",position)
+
+                Detailslauncher.launch(intent)
+
+            })
+
+
         recyclerView.adapter = adapter
 
-        // Подписка на изменения списка задач
+
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.tasks.collect { tasks ->
@@ -207,35 +215,46 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-
         // Добавление задачи
         buttonAddTask.setOnClickListener {
             val task = editTextTask.text.toString()
+            val header = editTextheader.text.toString()
             if (task.isNotBlank()) {
-                viewModel.addTask(task)
+               // tasks.add(Task(header,task,false))
+                viewModel.addTask(Task(header,task,false))
+                adapter.notifyItemInserted(tasks.size - 1) // более эффективно, чем notifyDataSetChanged
                 editTextTask.text.clear()
+                editTextheader.text.clear()
             } else {
                 Toast.makeText(this, "Введите задачу", Toast.LENGTH_SHORT).show()
             }
         }
 
-        // Загрузим тестовые данные при первом запуске (если список пуст)
-        if (viewModel.tasks.value.isEmpty()) {
-            viewModel.loadTestData()
-        }
+        // Восстановление данных при повороте (опционально, см. Лаб.5)
+        /*if (savedInstanceState != null) {
+            val savedTasks = savedInstanceState.getParcelableArrayList<Task>("tasks"
+            )
+            if (savedTasks != null) {
+               // tasks.clear()
+                //tasks.addAll(savedTasks)
+                adapter.notifyDataSetChanged()
+            }
+        }*/
     }
+
+   /* override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        outState.putParcelableArrayList("tasks", ArrayList<Task>(tasks))
+    }*/
 }
 ```
-
-Обратите внимание: адаптер теперь не хранит список, а получает его извне через метод `updateData`. Нужно добавить этот метод в `TaskAdapter`.
-
-### Этап 5. Модификация TaskAdapter (10 мин)
-
-Измените адаптер так, чтобы он не содержал внутреннего списка, а принимал список через конструктор и обновлялся методом `updateData`. Также добавьте обработку долгого нажатия.
-
+<br>
+Листинг Адаптера
+<br>
 ```kotlin
-package com.example.todoapp
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -243,131 +262,132 @@ import android.widget.CheckBox
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-class TaskAdapter(
-    private var tasks: List<String>,
-    private val onItemClick: (Int) -> Unit,
-    private val onItemLongClick: (Int) -> Unit
-) : RecyclerView.Adapter<TaskAdapter.TaskViewHolder>() {
+class TaskAdapter(private var tasks: List<Task>,
+                  private val onItemLongClick: (Int) -> Unit,
+                  private val onCheck: (Boolean, Int) -> Unit,
+                  private val onItemClick: (Int) -> Unit
+) :
+    RecyclerView.Adapter<TaskAdapter.TaskViewHolder>() {
 
+
+    // ViewHolder хранит ссылки на элементы внутри карточки
     class TaskViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val textHeader: TextView = itemView.findViewById(R.id.TaskHeader)
         val textTask: TextView = itemView.findViewById(R.id.textTask)
         val checkTask: CheckBox = itemView.findViewById(R.id.checkTask)
+
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_task, parent, false)
-        return TaskViewHolder(view)
+        val hldr = TaskViewHolder(view)
+
+        return hldr
     }
 
     override fun onBindViewHolder(holder: TaskViewHolder, position: Int) {
-        val task = tasks[position]
-        holder.textTask.text = task
+
+        var TASK =  tasks[position]
+        val taskname = TASK.task
+        val header = TASK.header
+        holder.textHeader.text = header
+        holder.textTask.text = taskname
+        holder.checkTask.isChecked=TASK.done
+        if (position % 2 == 0) {
+            // Четная позиция
+           holder.textTask.setBackgroundResource(R.color.EvenlyRed)
+           holder.itemView.setBackgroundResource(R.color.EvenlyBlue)
+            holder.textTask.setTextColor(Color.WHITE)
+
+        } else {
+            // Нечетная позиция
+            holder.textTask.setBackgroundResource(R.color.UnevenlyGreen)
+            holder.textTask.setTextColor(Color.BLACK)
+           holder.itemView.setBackgroundResource(R.color.UnvenlyPurple)
+        }
+
 
         holder.itemView.setOnClickListener {
             onItemClick(position)
         }
 
+        // Обработка чекбокса (опционально)
+        holder.checkTask.setOnCheckedChangeListener { _, isChecked ->
+            // Можно добавить логику отметки выполнения, например, перечеркивание текста
+            if (isChecked) {
+
+                holder.textTask.paintFlags =
+                    holder.textTask.paintFlags or android.graphics.Paint.STRIKE_THRU_TEXT_FLAG
+                onCheck(true, position)
+
+            } else {
+
+                holder.textTask.paintFlags = holder.textTask.paintFlags and android.graphics.Paint.STRIKE_THRU_TEXT_FLAG.inv()
+
+                onCheck(false, position)
+            }
+        }
         holder.itemView.setOnLongClickListener {
             onItemLongClick(position)
+            holder.checkTask.isChecked=false
             true
         }
 
-        // (Опционально) логика чекбокса из Лаб.6
-        holder.checkTask.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                holder.textTask.paintFlags = holder.textTask.paintFlags or android.graphics.Paint.STRIKE_THRU_TEXT_FLAG
-            } else {
-                holder.textTask.paintFlags = holder.textTask.paintFlags and android.graphics.Paint.STRIKE_THRU_TEXT_FLAG.inv()
-            }
-        }
     }
 
     override fun getItemCount(): Int = tasks.size
 
-    fun updateData(newTasks: List<String>) {
+
+    // Метод для обновления списка
+    fun updateData(newTasks: List<Task>) {
+        //     tasks.clear()
+        //   tasks.addAll(newTasks)
+
         tasks = newTasks
         notifyDataSetChanged()
     }
 }
 ```
+<br>
+<img width="435" height="874" alt="image" src="https://github.com/user-attachments/assets/172e06d2-f5b6-4bc0-bedb-2a696dc338a0" />
+<img width="549" height="275" alt="image" src="https://github.com/user-attachments/assets/f845faac-0839-4e29-9fb9-1138ca2a32d2" />
+<br>
 
-### Этап 6. Обновление DetailActivity (5 мин)
+## 1 Для чего нужен ViewModel? Как он помогает при повороте экрана?
+ViewModel хранит UI-данные и живёт дольше Activity/Fragment.
 
-Оставим `DetailActivity` без изменений – она получает текст задачи через Intent и отображает его. Для удаления с экрана деталей можно было бы использовать result API, но в рамках этой лабораторной мы реализуем удаление по долгому нажатию в списке, что уже добавлено.
+При повороте Activity уничтожается и создаётся заново, но ViewModel сохраняется, данные не теряются и не загружаются повторно.
 
-### Этап 7. Запуск и тестирование (10 мин)
+Гарантирует автоматическую очистку (onCleared) при финише владельца, предотвращая утечки.
+<br>
+##2 Чем StateFlow отличается от LiveData? В каких случаях предпочтительнее использовать StateFlow?
+StateFlow и LiveData делают одно и то-же, но StateFlow работает асинхронно, а так - же имеет больше встроенного функционала. StateFlow кроссплатформенный, тогда как LiveData только под андроид
+Когда StateFlow предпочтительнее:
 
-Запустите приложение. Проверьте:
-- При старте отображаются тестовые задачи.
-- Добавление новой задачи работает и список обновляется.
-- Удаление задачи по долгому нажатию работает (появляется Toast, задача исчезает).
-- При повороте экрана список задач сохраняется (ViewModel переживает поворот).
-- Клик по задаче открывает экран деталей с правильным текстом.
+Активное использование корутин и Flow.
 
-### Этап 8. Дополнительные улучшения (оставшееся время, 10 мин)
+Сложные реактивные цепочки, комбинирование потоков.
 
-1. **Использование sealed class для состояния**  
-   Создайте класс `TasksState` (Loading, Success, Error). Вместо `List<String>` используйте `StateFlow<TasksState>`. При загрузке тестовых данных добавьте имитацию загрузки.
+Кроссплатформенная разработка (Kotlin Multiplatform).
+<br>
+##3 Что такое lifecycleScope и repeatOnLifecycle? Зачем они нужны при подписке на StateFlow?
+lifecycleScope — это область видимости (scope) корутины, привязанная к жизненному циклу компонента (Activity или Fragment). Корутины, запущенные в этом скоупе, автоматически отменяются (cancels), когда компонент уничтожается (onDestroy).
+repeatOnLifecycle(state) — это функция-расширение, которая запускает переданный блок кода в новой корутине, когда жизненный цикл достигает нужного состояния (например, Lifecycle.State.STARTED). Как только состояние падает ниже заданного (например, при переходе приложения в фон, когда вызывается onStop), эта внутренняя корутина автоматически отменяется. Когда пользователь возвращается, корутина перезапускается.
+<br>
+##4 Как обновить данные в StateFlow?
+StateFlow представлен двумя интерфейсами: StateFlow<T> (только для чтения) и MutableStateFlow<T> (для изменения). Для обновления данных используется MutableStateFlow
+<br>
+```kotlin
+private val _state = MutableStateFlow(initialValue)
+val state: StateFlow<UiState> = _state
 
-2. **SharedFlow для событий**  
-   Вместо прямого вызова Toast в Activity, можно использовать `SharedFlow` для отправки одноразовых событий (например, сообщение об ошибке). Создайте `MutableSharedFlow<String>` в ViewModel и подпишитесь на него в Activity.
-
-3. **Редактирование задачи**  
-   Добавьте возможность редактирования задачи через второй экран: передавайте позицию и текущий текст, а после редактирования возвращайте результат через `ActivityResultLauncher` и обновляйте задачу через `viewModel.updateTask()`.
-
----
-
-## 4. Индивидуальные задания (вариативно)
-
-Выберите одно из заданий для самостоятельной реализации:
-
-1. **Sealed class для состояния загрузки**  
-   Реализуйте состояние `TaskState` (Loading, Success(List<String>), Error(String)). В ViewModel при "загрузке" тестовых данных добавьте задержку (например, через `delay` в корутине) и эмитируйте состояния. В Activity отображайте прогресс-бар или сообщение об ошибке.
-
-2. **SharedFlow для уведомлений**  
-   Добавьте в ViewModel `MutableSharedFlow<String>` для отправки сообщений (например, "Задача добавлена", "Ошибка: пустая задача"). В Activity подпишитесь на этот поток и показывайте Toast или Snackbar.
-
-3. **Редактирование с возвратом результата**  
-   Реализуйте редактирование задачи на втором экране с помощью `ActivityResultContracts.StartActivityForResult`. Передавайте позицию и текст, после редактирования возвращайте изменённый текст и вызывайте `viewModel.updateTask()`.
-
-4. **Удаление свайпом**  
-   Добавьте возможность удаления задачи свайпом с помощью `ItemTouchHelper`. При свайпе вызывайте `viewModel.deleteTask(position)` и показывайте Snackbar с возможностью отмены.
-
----
-
-## 5. Контрольные вопросы
-
-1. Для чего нужен ViewModel? Как он помогает при повороте экрана?
-2. Чем StateFlow отличается от LiveData? В каких случаях предпочтительнее использовать StateFlow?
-3. Что такое `lifecycleScope` и `repeatOnLifecycle`? Зачем они нужны при подписке на StateFlow?
-4. Как обновить данные в StateFlow?
-5. Какие преимущества даёт вынос логики в ViewModel с точки зрения тестирования?
-
----
-
-## 6. Требования к отчёту
-
-Отчёт должен содержать:
-- Титульный лист с названием работы, ФИО, группой.
-- Цель работы.
-- Листинг класса `MainViewModel`.
-- Листинг обновлённого `MainActivity.kt`.
-- Листинг обновлённого `TaskAdapter.kt`.
-- Скриншоты работающего приложения (список задач, поворот экрана – данные сохранились).
-- Ответы на контрольные вопросы.
-- Вывод по работе (что нового узнали, какие проблемы решили).
-
----
-
-## 7. Возможные ошибки и их решение
-
-- **При подписке на StateFlow список не обновляется** – проверьте, что используется `repeatOnLifecycle` и `collect` внутри корутины. Убедитесь, что в адаптере вызывается `updateData` с новым списком.
-- **ViewModel не сохраняет состояние после поворота** – убедитесь, что используете `by viewModels()`, а не создаёте экземпляр вручную.
-- **Ошибка "Cannot create an instance of class ViewModel"** – добавьте зависимость `implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0'` и выполните Sync.
-- **При удалении задачи по долгому нажатию адаптер не обновляется** – проверьте, что в `updateData` вызывается `notifyDataSetChanged()`.
-- **Корутины не работают** – добавьте импорт `import androidx.lifecycle.lifecycleScope` и `import androidx.lifecycle.repeatOnLifecycle`.
-
----
-
-**Успешной работы!**
+fun updateData(newValue: UiState) {
+    _state.value = newValue
+}
+```
+<br>
+##5 Какие преимущества даёт вынос логики в ViewModel с точки зрения тестирования?
+ViewModel спроектирована так, что её можно легко тестировать изолированно, без реального Android-окружения. Вся логика (загрузка данных, обработка ошибок, преобразования, управление состоянием UI) сосредоточена в ViewModel. Тесты проверяют именно бизнес-правила, а не взаимодействие с Android-фреймворком.
+<br>
+Вывод:  изучены архитектурный компонент ViewModel и реактивный поток StateFlow, а также способы их интеграции с жизненным циклом Activity. Практически реализован перенос логики управления списком задач из MainActivity в выделенный класс MainViewModel, что позволило отделить бизнес-логику и состояние UI от слоя представления.
