@@ -161,6 +161,7 @@ class DetailActivity : AppCompatActivity() {
 <br>
 Листинг обновлённого adapter
 <br>
+
 ```kotlin
 package com.example.myapplication123123123123
 
@@ -261,9 +262,11 @@ class TaskAdapter(private var tasks: MutableList<Task>,
     }
 }
 ```
+
 <br>
 activitymain.kt
 <br>
+
 ```kotlin
 package com.example.myapplication123123123123
 import android.app.Activity
@@ -370,12 +373,17 @@ class MainActivity : AppCompatActivity() {
     }
 }
 ```
+
 <br>
 <br>
+
 <img width="451" height="880" alt="image" src="https://github.com/user-attachments/assets/6d44de3a-8abd-45ba-a878-170af1abd486" />
 <img width="438" height="820" alt="image" src="https://github.com/user-attachments/assets/1ae0550c-f4ec-4fca-861d-2868d53bd5dd" />
 <br>
+
 Ответы на вопросы
+<br>
+
 ## 1. Что такое Intent? Какие виды Intent существуют?
 
 - **Intent ** —  – это объект для обмена сообщениями между компонентами Android (Activity, Service, BroadcastReceiver). С его помощью запускают экраны, службы, отправляют широковещательные сообщения, открывают веб-страницы и т.д. Intent содержит описание требуемого действия (action), данные (data), категорию, флаги и дополнительные параметры (extras).
@@ -393,6 +401,7 @@ val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://example.com"))
 Для сложных объектов используют Parcelable (рекомендуется) или Serializable. Можно обернуть данные в Bundle и положить его в Intent. Альтернативные способы: SharedViewModel (при навигации внутри одного приложения) или Safe Args в Navigation Component.
   
 <br>
+
 ## 3.Какие способы обработки кликов на элементах RecyclerView вы знаете?
 Интерфейс обратного вызова (listener): Создаётся интерфейс OnItemClickListener, передаётся в адаптер. Во ViewHolder устанавливается setOnClickListener, который вызывает метод интерфейса. Activity/Fragment реализует этот интерфейс.
 
