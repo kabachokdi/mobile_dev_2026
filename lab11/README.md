@@ -1,292 +1,486 @@
-# Лабораторная работа №11
-## Рефакторинг: добавление слоя Repository между ViewModel и Room
+<div align="center">
 
-**Длительность:** 1 час 30 минут  
-**Цель работы:** Изучить архитектурный паттерн Repository, научиться выделять слой доступа к данным, отделяя его от бизнес-логики, выполнить рефакторинг существующего приложения для использования репозитория.
+**МИНИСТЕРСТВО НАУКИ И ВЫСШЕГО ОБРАЗОВАНИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ**  
+**ФЕДЕРАЛЬНОЕ ГОСУДАРСТВЕННОЕ БЮДЖЕТНОЕ ОБРАЗОВАТЕЛЬНОЕ УЧРЕЖДЕНИЕ ВЫСШЕГО ОБРАЗОВАНИЯ**  
+**«САХАЛИНСКИЙ ГОСУДАРСТВЕННЫЙ УНИВЕРСИТЕТ»**
 
----
+<br>
+<br>
 
-## 1. Теоретическая справка
+Институт естественных наук и техносферной безопасности  
+Кафедра информатики  
+Бычков Дмитрий Николаевич
 
-### 1.1. Паттерн Repository
-**Repository** (репозиторий) — это архитектурный компонент, который инкапсулирует логику доступа к данным, предоставляя единый API для работы с данными из различных источников (база данных, сеть, кэш). В классической Clean Architecture Repository находится между источниками данных (Data Sources) и бизнес-логикой (Use Cases / ViewModel).
+<br>
+<br>
+<br>
+<br>
 
-Основные задачи репозитория:
-- Абстрагировать источник данных от остального приложения.
-- Предоставлять чистый API для работы с данными (например, методы `getTasks()`, `addTask()`, `deleteTask()`).
-- Управлять кэшированием, синхронизацией и обработкой ошибок.
+Лабораторная работа №11
+Интеграция Room в проект. Сохранение списка задач в БД
+01.03.02 Прикладная математика и информатика  
+3 Курс
 
-### 1.2. Зачем нужен Repository?
-- **Разделение ответственности**: ViewModel не знает, откуда берутся данные (БД, сеть, файлы) и как они сохраняются.
-- **Тестирование**: можно легко заменить реальный репозиторий на mock-объект при тестировании ViewModel.
-- **Гибкость**: при изменении источника данных (например, замена Room на другую БД или добавление сетевого источника) меняется только реализация репозитория, но не ViewModel.
-- **Единая точка доступа**: все операции с данными проходят через репозиторий, что упрощает добавление кэширования или логирования.
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
 
-### 1.3. Структура после рефакторинга
+<div align="right">
+Научный руководитель
+<br>
+Соболев Евгений Игоревич
+</div>
 
-До:
-```
-ViewModel → DAO (Room)
-```
+<br>
+<br>
+<br>
 
-После:
-```
-ViewModel → Repository (интерфейс) → RepositoryImpl → DAO (Room)
-```
+г. Южно-Сахалинск  
+2026 г.
 
-### 1.4. Репозиторий и корутины
-Методы репозитория, как и методы DAO, должны быть `suspend` для асинхронной работы, либо возвращать `Flow`. Это позволяет вызывать их из ViewModel в корутинах.
+</div>
+<br>
+<br>
+листинг TaskRepository
 
----
-
-## 2. Оборудование и программное обеспечение
-
-- Персональный компьютер с ОС Windows / macOS / Linux.
-- Android Studio с проектом `TodoApp`, который был разработан в лабораторной работе №10 (с Room и ViewModel).
-- Эмулятор или реальное устройство для проверки работоспособности после рефакторинга.
-
----
-
-## 3. Порядок выполнения работы
-
-### Этап 1. Подготовка проекта (5 мин)
-
-Откройте проект `TodoApp`, созданный в лабораторной работе №10. Убедитесь, что проект компилируется и работает корректно: задачи добавляются, сохраняются после перезапуска, чекбоксы работают.
-
-### Этап 2. Создание интерфейса репозитория (10 мин)
-
-Создайте пакет `data` (если его нет) и внутри него — пакет `repository`. Создайте интерфейс `TaskRepository`, который будет определять контракт для работы с задачами.
+<br>
 
 ```kotlin
-package com.example.todoapp.data.repository
 
 import com.example.todoapp.database.TaskEntity
 import kotlinx.coroutines.flow.Flow
 
 interface TaskRepository {
     fun getAllTasks(): Flow<List<TaskEntity>>
-    suspend fun addTask(title: String)
-    suspend fun deleteTask(task: TaskEntity)
-    suspend fun updateTask(task: TaskEntity)
-    suspend fun toggleTaskCompletion(task: TaskEntity, isCompleted: Boolean)
-    suspend fun deleteAllTasks()
+    suspend fun addTask(task: TaskEntity): Boolean
+    suspend fun addTasktst(task: TaskEntity): Boolean
+    suspend fun deleteTask(task: TaskEntity): Boolean
+    suspend fun updateTask(task: TaskEntity) : Boolean
+    suspend fun toggleTaskCompletion(task: TaskEntity, isCompleted: Boolean) : Boolean
+    suspend fun deleteAllTasks() : Boolean
+    suspend fun loadTaskByHeader(header: String): Pair<List<TaskEntity>, Boolean>
 }
 ```
 
-Обратите внимание: сигнатуры методов повторяют методы ViewModel, но теперь они принадлежат репозиторию.
-
-### Этап 3. Создание реализации репозитория (15 мин)
-
-В том же пакете создайте класс `TaskRepositoryImpl`, реализующий интерфейс `TaskRepository`. Он будет принимать `TaskDao` в конструкторе и делегировать вызовы к DAO.
+<br>
+Листинг TaskRepositoryImpl
+<br>
 
 ```kotlin
-package com.example.todoapp.data.repository
-
-import com.example.todoapp.database.TaskDao
-import com.example.todoapp.database.TaskEntity
-import kotlinx.coroutines.flow.Flow
-import javax.inject.Inject
-
 class TaskRepositoryImpl(
     private val taskDao: TaskDao
 ) : TaskRepository {
 
     override fun getAllTasks(): Flow<List<TaskEntity>> = taskDao.getAllTasks()
 
-    override suspend fun addTask(title: String) {
-        val task = TaskEntity(title = title)
-        taskDao.insertTask(task)
+    override suspend fun addTask(task: TaskEntity): Boolean {
+        runCatching{ val task = TaskEntity(title = task.title, header =task.header)
+            taskDao.insertTask(task)
+            return true
+        }.onFailure { return false }
+        return false
+    }
+   override  suspend fun addTasktst(task: TaskEntity): Boolean {
+        val task = TaskEntity(id = task.id,title = task.title, header =task.header)
+       runCatching{taskDao.insertTask(task)
+           return true}.onFailure{return false}
+       return false
     }
 
-    override suspend fun deleteTask(task: TaskEntity) {
-        taskDao.deleteTask(task)
+    override suspend fun deleteTask(task: TaskEntity): Boolean {
+
+            runCatching{taskDao.deleteTask(task)
+                return true}.onFailure { return false }
+        return false
+        }
+
+
+
+    override suspend fun updateTask(task: TaskEntity): Boolean {
+
+            runCatching{taskDao.updateTask(task)
+                return true}.onFailure { return false }
+        return false
     }
 
-    override suspend fun updateTask(task: TaskEntity) {
-        taskDao.updateTask(task)
-    }
-
-    override suspend fun toggleTaskCompletion(task: TaskEntity, isCompleted: Boolean) {
-        val updatedTask = task.copy(isCompleted = isCompleted)
+    override suspend fun toggleTaskCompletion(task: TaskEntity, isCompleted: Boolean): Boolean {
+       runCatching {  val updatedTask = task.copy(isCompleted = isCompleted)
         taskDao.updateTask(updatedTask)
+           return true  }.onFailure { return false }
+        return false
+        }
+
+
+    override suspend fun deleteAllTasks(): Boolean {
+
+            runCatching {taskDao.deleteAll()
+                return true
+        }.onFailure { return false }
+        return false
     }
 
-    override suspend fun deleteAllTasks() {
-        taskDao.deleteAll()
+    override suspend fun loadTaskByHeader(header: String): Pair<List<TaskEntity>,Boolean> {
+       runCatching {
+           val lst = taskDao.byheader(header)
+       return Pair(lst,true)
+       }.onFailure {return Pair(emptyList(),false)  }
+        return Pair(emptyList(),true)
     }
 }
 ```
-
-### Этап 4. Рефакторинг MainViewModel (15 мин)
-
-Теперь измените `MainViewModel`, чтобы он использовал репозиторий, а не напрямую DAO.
+<br>
+Листинг MainViewModel
+<br>
 
 ```kotlin
-package com.example.todoapp.ui.theme
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.todoapp.data.repository.TaskRepository
+import com.example.myapplication.data.TaskRepository
 import com.example.todoapp.database.TaskEntity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class MainViewModel(
+class MainViewModel (
     private val repository: TaskRepository
-) : ViewModel() {
+): ViewModel() {
 
-    val tasks: StateFlow<List<TaskEntity>> = repository.getAllTasks()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
 
-    fun addTask(title: String) {
+
+    private  var  _mistake = MutableStateFlow<Boolean>(true)
+    val mistake: StateFlow<Boolean> = _mistake.asStateFlow()
+    var needed = MutableStateFlow<List<TaskEntity>>(emptyList())
+
+    val tasks: StateFlow<List<TaskEntity>> = repository.getAllTasks().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(3000),
+
+        initialValue = emptyList()
+    )
+    fun loadTasksForCategory(category: String) {
+        viewModelScope.launch{
+            val par = repository.loadTaskByHeader(category)
+            needed.value = par.first
+            _mistake.value = par.second
+        }
+    }
+    fun reloadMistakes(){
+        _mistake.value = true
+    }
+
+    fun addTask(task: TaskEntity) {
+        viewModelScope.launch(Dispatchers.Main.immediate) {
+            val task = TaskEntity(title = task.title, header = task.header)
+           _mistake.value = repository.addTask(task)
+        }
+
+    }
+
+    fun addTasktst(task: TaskEntity) {
         viewModelScope.launch {
-            repository.addTask(title)
+            val data =  repository.addTasktst(task)
+            _mistake.value = data
+        }
+
+    }
+
+
+    fun deleteTask(task: TaskEntity){
+       viewModelScope.launch{
+           _mistake.value = repository.deleteTask(task)
         }
     }
 
-    fun deleteTask(task: TaskEntity) {
+    fun updateTask(task: TaskEntity) {
         viewModelScope.launch {
-            repository.deleteTask(task)
+            _mistake.value =  repository.updateTask(task)
         }
     }
 
     fun toggleTaskCompletion(task: TaskEntity, isCompleted: Boolean) {
-        viewModelScope.launch {
-            repository.toggleTaskCompletion(task, isCompleted)
+        viewModelScope.launch{
+            val updatedTask = task.copy(isCompleted = isCompleted)
+            _mistake.value =  repository.updateTask(updatedTask)
         }
     }
 
     fun deleteAllTasks() {
         viewModelScope.launch {
-            repository.deleteAllTasks()
+            _mistake.value =  repository.deleteAllTasks()
         }
     }
-}
+    }
 ```
 
-### Этап 5. Обновление фабрики ViewModel (10 мин)
-
-Измените `MainViewModelFactory`, чтобы она принимала репозиторий, а не базу данных.
+<br>
+Листинг MainViewModelFactory
+<br>
 
 ```kotlin
-package com.example.todoapp
+    class MainViewModelFactory(
+        private val repository: TaskRepository
+    ) : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
+                @Suppress("UNCHECKED_CAST")
+                return MainViewModel(repository) as T
+            }
+            throw IllegalArgumentException("Unknown ViewModel class")
+        }
+    }
+```
 
+<br>
+Листинг MainActivity
+<br>
+
+```kotlin
+package com.example.myapplication
+import android.app.Activity
+import android.content.Intent
+import android.os.Bundle
+import android.widget.Button
+import android.widget.EditText
+import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.example.todoapp.data.repository.TaskRepository
-import com.example.todoapp.ui.theme.MainViewModel
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.myapplication.data.TaskRepository
+import com.example.myapplication.data.TaskRepositoryImpl
+import com.example.myapplication.database.AppDatabase
+import com.example.todoapp.database.TaskEntity
+import kotlinx.coroutines.launch
 
-class MainViewModelFactory(
-    private val repository: TaskRepository
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return MainViewModel(repository) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
-    }
-}
-```
-
-### Этап 6. Обновление MainActivity (10 мин)
-
-В `MainActivity` нужно создать экземпляр репозитория и передать его в фабрику. Так как у нас уже есть база данных, мы можем получить DAO и создать репозиторий.
-
-```kotlin
 class MainActivity : AppCompatActivity() {
+
+    private var tasks = emptyList<TaskEntity>()
+    private lateinit var adapter: TaskAdapter
+    private lateinit var  Detailslauncher: ActivityResultLauncher<Intent>
+    var  ready = 0
+    class MainViewModelFactory(
+        private val repository: TaskRepository
+    ) : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
+                @Suppress("UNCHECKED_CAST")
+                return MainViewModel(repository) as T
+            }
+            throw IllegalArgumentException("Unknown ViewModel class")
+        }
+    }
+
     private val database by lazy { AppDatabase.getInstance(this) }
     private val repository by lazy { TaskRepositoryImpl(database.taskDao()) }
     private val viewModel: MainViewModel by viewModels {
         MainViewModelFactory(repository)
     }
 
-    // ... остальной код без изменений
-}
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        val editTextTask = findViewById<EditText>(R.id.editTextTask)
+        val editTextheader = findViewById<EditText>(R.id.editTextheader)
+        val buttonAddTask = findViewById<Button>(R.id.buttonAddTask)
+        val recyclerView = findViewById<RecyclerView>(R.id.recyclerViewTasks)
+        val searchbutton = findViewById<Button>(R.id.buttonsearch)
+        val searchedd = findViewById<EditText>(R.id.editTextSearch)
+        val mbutton = findViewById<Button>(R.id.button)
+            // Создание лаунчера DetailActictivity, с возвратом разных result code
+        Detailslauncher  = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
+                result ->
+            if (result.resultCode== RESULT_CANCELED){
+                viewModel.deleteTask(result.data?.getParcelableExtra<TaskEntity>("Task") ?: viewModel.tasks.value[0])
+                adapter.updateData(viewModel.tasks.value)
+                if (!viewModel.mistake.value){
+                    Toast.makeText(this, "Что то пошло не так....", Toast.LENGTH_SHORT).show()
+                    viewModel.reloadMistakes()
+                }
+
+                adapter.notifyItemRemoved(result.data?.getIntExtra("pos", 0) ?: 0)
+                Toast.makeText(this, "Задача удалена", Toast.LENGTH_SHORT).show()
+            }
+            if (result.resultCode == 3){
+               val newTask = result.data?.getParcelableExtra<TaskEntity>("Task") ?:viewModel.tasks.value[result.data?.getIntExtra("pos", 0) ?: 0]
+                newTask.title = result.data?.getStringExtra("nw") ?: ""
+                viewModel.updateTask(newTask)
+                if (!viewModel.mistake.value){
+                    Toast.makeText(this, "Что то пошло не так....", Toast.LENGTH_SHORT).show()
+                    viewModel.reloadMistakes()
+                }
+                adapter.updateData(viewModel.tasks.value)
+               Toast.makeText(this, "Задача изменена", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+
+        // Настройка RecyclerView
+        recyclerView.layoutManager = LinearLayoutManager(this)
+
+        adapter = TaskAdapter(tasks,
+
+            { position,task ->
+                viewModel.deleteTask(task)
+                if (!viewModel.mistake.value){
+                    Toast.makeText(this, "Что то пошло не так....", Toast.LENGTH_SHORT).show()
+                    viewModel.reloadMistakes()
+                }
+                adapter.updateData(viewModel.tasks.value)
+                adapter.notifyItemRemoved(position)
+                Toast.makeText(this, "Задача удалена", Toast.LENGTH_SHORT).show()
+            },
+            ///
+            { chk,task, done->
+                viewModel.toggleTaskCompletion(task,chk)
+                if (!viewModel.mistake.value){
+                    Toast.makeText(this, "Что то пошло не так....", Toast.LENGTH_SHORT).show()
+                    viewModel.reloadMistakes()
+                }
+               },
+
+            {position, Task ->
+                val intent = Intent(this, DetailActivity::class.java)
+                intent.putExtra("Task", Task)
+                intent.putExtra("pos",position)
+                Detailslauncher.launch(intent)
+
+            }
+        )
+        recyclerView.adapter = adapter
+
+            lifecycleScope.launch {
+                repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    viewModel.tasks.collect { tasks ->
+                        adapter.updateData(tasks)
+                    }
+                }
+            }
+
+        // Добавление задачи
+        buttonAddTask.setOnClickListener {
+            val task = editTextTask.text.toString()
+            val header = editTextheader.text.toString()
+            if (task.isNotBlank()) {
+                viewModel.addTask(TaskEntity(header=header, title =task))
+                if (!viewModel.mistake.value){
+                    Toast.makeText(this, "Что то пошло не так....", Toast.LENGTH_SHORT).show()
+                    viewModel.reloadMistakes()
+                }
+                editTextTask.text.clear()
+                editTextheader.text.clear()
+            } else {
+                Toast.makeText(this, "Введите задачу", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        searchbutton.setOnClickListener {
+            val header = searchedd.text.toString()
+            if (header.isNotBlank()) {
+                viewModel.loadTasksForCategory(header)
+                if (!viewModel.mistake.value){
+                    Toast.makeText(this, "Что то пошло не так....", Toast.LENGTH_SHORT).show()
+                    viewModel.reloadMistakes()
+                }
+                tasks = viewModel.needed.value
+                for ( t in tasks){
+                    Toast.makeText(this, t.title, Toast.LENGTH_SHORT).show()
+                }
+                searchedd.text.clear()
+            } else {
+                Toast.makeText(this, "Введите задачу", Toast.LENGTH_SHORT).show()
+            }
+        }
+        var mstk = true
+        mbutton.setOnClickListener {
+            viewModel.addTasktst(TaskEntity(
+                id = 1,
+                header = "test",
+                title = "Tsee",
+                isCompleted = true,
+                createdTime = System.currentTimeMillis()))
+
+            if (!viewModel.mistake.value){
+                Toast.makeText(this,"Что-то Пошло не так", Toast.LENGTH_SHORT).show()
+                viewModel.reloadMistakes()
+            }
+
+        }
+
+        }
+    }
 ```
 
-Убедитесь, что импорты корректны.
 
-### Этап 7. Проверка работоспособности (10 мин)
+<br>
+<img width="1889" height="937" alt="image" src="https://github.com/user-attachments/assets/5018e1b4-fdaf-423e-aac1-5e4c8c0f2174" />
 
-Запустите приложение. Проверьте все функции:
-- Добавление новой задачи.
-- Отметка чекбокса (изменение статуса).
-- Удаление по долгому нажатию.
-- Закройте приложение и откройте снова — данные должны сохраниться.
+<img width="1885" height="878" alt="image" src="https://github.com/user-attachments/assets/dee655d8-50ad-46f1-a7b9-f7c29cf20f94" />
 
-Если всё работает как раньше — рефакторинг выполнен успешно.
+<img width="1878" height="975" alt="image" src="https://github.com/user-attachments/assets/739fe467-9f95-4839-9f5d-3c1335a3974f" />
 
-### Этап 8. Анализ изменений (5 мин)
+<bt>
+    
+Контрольные воросы
 
-Обсудите, что изменилось:
-- ViewModel больше не зависит от Room напрямую, только от интерфейса `TaskRepository`.
-- При необходимости заменить Room на другой источник данных (например, Firebase), достаточно создать новую реализацию репозитория, не трогая ViewModel.
-- Код стал более модульным и тестируемым.
+<br>
 
-### Этап 9. Дополнительное задание (оставшееся время)
+## 1 Какую роль выполняет слой Repository в архитектуре приложения?
+Слой Repository (репозиторий) является промежуточным звеном между источниками данных (локальная БД, сеть, кэш) и потребителями данных (ViewModel, другие слои)
 
-Если осталось время, добавьте в репозиторий метод поиска задач по тексту (как в индивидуальных заданиях Лаб.10) и используйте его в ViewModel.
+## 2 Какие преимущества даёт использование Repository по сравнению с прямым обращением к DAO из ViewModel?
 
----
+- Слабая связанность (Loose Coupling) – ViewModel не зависит от конкретной реализации базы данных (Room). При замене источника данных (например, переход на другую БД) изменяется только репозиторий, а ViewModel остаётся нетронутой.
 
-## 4. Индивидуальные задания (вариативно)
+- Тестируемость – ViewModel, работающую напрямую с DAO, сложно протестировать без реальной БД. С репозиторием достаточно создать его заглушку и проверить логику ViewModel изолированно.
 
-Выберите одно из заданий для самостоятельной реализации:
+## 3 Как изменится ViewModel, если мы захотим добавить ещё один источник данных (например, сетевое API)?
 
-1. **Добавление источника данных "In-Memory"**  
-   Создайте альтернативную реализацию `TaskRepository` — `InMemoryTaskRepository`, которая хранит список задач в памяти (без БД). Переключите приложение на неё и убедитесь, что ViewModel работает без изменений (данные не сохраняются между сессиями, но это демонстрирует гибкость).
+ViewModel не изменится, если репозиторий корректно спроектирован. Это одно из главных преимуществ паттерна.
 
-2. **Тестирование ViewModel с mock-репозиторием**  
-   Напишите простой тест для `MainViewModel`, используя mock-репозиторий (например, с помощью `Mockito` или вручную создав поддельную реализацию). Проверьте, что при вызове `addTask` вызывается соответствующий метод репозитория.
+## 4 Почему методы репозитория объявлены как suspend?
 
-3. **Добавление обработки ошибок**  
-   Модифицируйте репозиторий так, чтобы методы могли возвращать `Result` (успех/ошибка). Добавьте в ViewModel обработку ошибок (например, показывать Toast).
+- Room требует фонового выполнения – запросы к БД не должны блокировать главный поток (иначе интерфейс зависнет). Room автоматически запускает suspend-функции DAO на фоновом пуле потоков.
 
-4. **Внедрение зависимостей через Dagger Hilt**  
-   (Если студенты знакомы с DI) Добавьте в проект Hilt и настройте внедрение репозитория и базы данных. Замените ручное создание в `MainActivity` на инъекцию.
+- Удобство для вызывающего кода – ViewModel может вызвать repository.insert(task) из корутины (viewModelScope.launch) и не заботиться о переключении потоков вручную.
 
----
+- Правильная отмена операций – при отмене корутины (например, если пользователь ушёл с экрана) работа suspend-функции прерывается, что предотвращает утечки и лишнюю работу.
+## 5 Что такое инверсия зависимостей и как она применяется в данном рефакторинге?
+Инверсия зависимостей (Dependency Inversion Principle, DIP) – один из принципов SOLID, гласящий:
 
-## 5. Контрольные вопросы
+1. Модули верхнего уровня не должны зависеть от модулей нижнего уровня. Оба должны зависеть от абстракций.
 
-1. Какую роль выполняет слой Repository в архитектуре приложения?
-2. Какие преимущества даёт использование Repository по сравнению с прямым обращением к DAO из ViewModel?
-3. Как изменится ViewModel, если мы захотим добавить ещё один источник данных (например, сетевое API)?
-4. Почему методы репозитория объявлены как `suspend`? 
-5. Что такое инверсия зависимостей и как она применяется в данном рефакторинге?
+2. Абстракции не должны зависеть от деталей. Детали должны зависеть от абстракций.
 
----
+В контексте нашего рефакторинга:
 
-## 6. Требования к отчёту
+-До добавления репозитория: ViewModel напрямую зависела от TaskDao – конкретной реализации доступа к БД Room. Это нарушало DIP, так как модуль верхнего уровня (ViewModel) зависел от деталей (конкретного DAO).
 
-Отчёт должен содержать:
-- Титульный лист с названием работы, ФИО, группой.
-- Цель работы.
-- Листинги всех созданных/изменённых файлов: `TaskRepository.kt`, `TaskRepositoryImpl.kt`, `MainViewModel.kt`, `MainViewModelFactory.kt`, `MainActivity.kt`.
-- Скриншоты работающего приложения (можно те же, что и в Лаб.10, но важно показать, что функциональность сохранена).
-- Ответы на контрольные вопросы.
-- Вывод по работе (что дало добавление слоя Repository, какие перспективы открывает).
+-После добавления репозитория: ViewModel зависит от абстракции – интерфейса или класса TaskRepository, который сам по себе является абстракцией над источником данных. TaskRepository может использовать TaskDao, сетевой сервис или что угодно, но ViewModel этого не видит.
 
----
+<br>
 
-## 7. Возможные ошибки и их решение
-
-- **Ошибка компиляции "Unresolved reference"** – проверьте импорты, особенно для `TaskRepositoryImpl` и `MainViewModelFactory`.
-- **NullPointerException при создании репозитория** – убедитесь, что `database.taskDao()` не возвращает `null` и что база данных инициализирована корректно.
-- **Приложение не видит методы репозитория** – проверьте, что класс `TaskRepositoryImpl` реализует все методы интерфейса.
-- **Flow не обновляется после изменений** – убедитесь, что в репозитории методы, возвращающие `Flow`, правильно делегируются DAO, а изменяющие методы вызываются в `viewModelScope`.
-
----
-
-## 8. Заключение
-
-В результате рефакторинга мы выделили слой Repository, что улучшило архитектуру приложения, сделало её более гибкой и тестируемой. Теперь приложение соответствует рекомендациям Google по архитектуре Android-приложений (Guide to app architecture).
-
-**Успешной работы!**
+Выводы - освоенны некоторые базовые архитектурные элементы, провели рефактор готового приложения 
