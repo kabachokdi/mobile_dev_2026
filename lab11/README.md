@@ -17,7 +17,7 @@
 <br>
 
 Лабораторная работа №11
-Интеграция Room в проект. Сохранение списка задач в БД
+Рефакторинг: добавление слоя Repository между ViewModel и Room
 01.03.02 Прикладная математика и информатика  
 3 Курс
 
@@ -57,18 +57,21 @@
 
 ```kotlin
 
+package com.example.myapplication.data
+
+import android.provider.ContactsContract.RawContacts.Data
 import com.example.todoapp.database.TaskEntity
 import kotlinx.coroutines.flow.Flow
 
 interface TaskRepository {
     fun getAllTasks(): Flow<List<TaskEntity>>
-    suspend fun addTask(task: TaskEntity): Boolean
-    suspend fun addTasktst(task: TaskEntity): Boolean
-    suspend fun deleteTask(task: TaskEntity): Boolean
-    suspend fun updateTask(task: TaskEntity) : Boolean
-    suspend fun toggleTaskCompletion(task: TaskEntity, isCompleted: Boolean) : Boolean
-    suspend fun deleteAllTasks() : Boolean
-    suspend fun loadTaskByHeader(header: String): Pair<List<TaskEntity>, Boolean>
+    suspend fun addTask(task: TaskEntity): Result<Unit>
+
+    suspend fun deleteTask(task: TaskEntity): Result<Unit>
+    suspend fun updateTask(task: TaskEntity): Result<Unit>
+    suspend fun toggleTaskCompletion(task: TaskEntity, isCompleted: Boolean): Result<Unit>
+    suspend fun deleteAllTasks(): Result<Unit>
+    suspend fun loadTaskByHeader(header: String): List<TaskEntity>
 }
 ```
 
@@ -83,75 +86,83 @@ class TaskRepositoryImpl(
 
     override fun getAllTasks(): Flow<List<TaskEntity>> = taskDao.getAllTasks()
 
-    override suspend fun addTask(task: TaskEntity): Boolean {
-        runCatching{ val task = TaskEntity(title = task.title, header =task.header)
+
+    override suspend fun addTask(task: TaskEntity): Result<Unit> {
+        return try {
+            val task = TaskEntity(id = task.id,title = task.title, header =task.header)
             taskDao.insertTask(task)
-            return true
-        }.onFailure { return false }
-        return false
-    }
-   override  suspend fun addTasktst(task: TaskEntity): Boolean {
-        val task = TaskEntity(id = task.id,title = task.title, header =task.header)
-       runCatching{taskDao.insertTask(task)
-           return true}.onFailure{return false}
-       return false
-    }
-
-    override suspend fun deleteTask(task: TaskEntity): Boolean {
-
-            runCatching{taskDao.deleteTask(task)
-                return true}.onFailure { return false }
-        return false
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
-
-
-
-    override suspend fun updateTask(task: TaskEntity): Boolean {
-
-            runCatching{taskDao.updateTask(task)
-                return true}.onFailure { return false }
-        return false
     }
 
-    override suspend fun toggleTaskCompletion(task: TaskEntity, isCompleted: Boolean): Boolean {
-       runCatching {  val updatedTask = task.copy(isCompleted = isCompleted)
-        taskDao.updateTask(updatedTask)
-           return true  }.onFailure { return false }
-        return false
+       override suspend fun deleteTask(task: TaskEntity): Result<Unit> {
+        return try {
+            taskDao.deleteTask(task)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
-
-
-    override suspend fun deleteAllTasks(): Boolean {
-
-            runCatching {taskDao.deleteAll()
-                return true
-        }.onFailure { return false }
-        return false
     }
 
-    override suspend fun loadTaskByHeader(header: String): Pair<List<TaskEntity>,Boolean> {
-       runCatching {
+
+    override suspend fun updateTask(task: TaskEntity): Result<Unit> {
+        return try {
+            taskDao.updateTask(task)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun toggleTaskCompletion(task: TaskEntity, isCompleted: Boolean): Result<Unit> {
+        return try {
+            val updatedTask = task.copy(isCompleted = isCompleted)
+            taskDao.updateTask(updatedTask)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+
+    override suspend fun deleteAllTasks(): Result<Unit> {
+        return try {
+            taskDao.deleteAll()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun loadTaskByHeader(header: String): List<TaskEntity>{
+
            val lst = taskDao.byheader(header)
-       return Pair(lst,true)
-       }.onFailure {return Pair(emptyList(),false)  }
-        return Pair(emptyList(),true)
+       return lst
+         }
+
     }
-}
 ```
+
 <br>
 Листинг MainViewModel
 <br>
 
 ```kotlin
 
+package com.example.myapplication
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.data.TaskRepository
 import com.example.todoapp.database.TaskEntity
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -162,8 +173,9 @@ class MainViewModel (
 
 
 
-    private  var  _mistake = MutableStateFlow<Boolean>(true)
-    val mistake: StateFlow<Boolean> = _mistake.asStateFlow()
+    private val _errorEvent = MutableSharedFlow<String>()
+    val errorEvent = _errorEvent.asSharedFlow()
+
     var needed = MutableStateFlow<List<TaskEntity>>(emptyList())
 
     val tasks: StateFlow<List<TaskEntity>> = repository.getAllTasks().stateIn(
@@ -172,56 +184,56 @@ class MainViewModel (
 
         initialValue = emptyList()
     )
+
     fun loadTasksForCategory(category: String) {
         viewModelScope.launch{
             val par = repository.loadTaskByHeader(category)
-            needed.value = par.first
-            _mistake.value = par.second
         }
     }
-    fun reloadMistakes(){
-        _mistake.value = true
-    }
 
-    fun addTask(task: TaskEntity) {
-        viewModelScope.launch(Dispatchers.Main.immediate) {
-            val task = TaskEntity(title = task.title, header = task.header)
-           _mistake.value = repository.addTask(task)
-        }
 
-    }
-
-    fun addTasktst(task: TaskEntity) {
+    fun addTask(title: TaskEntity) {
         viewModelScope.launch {
-            val data =  repository.addTasktst(task)
-            _mistake.value = data
+            repository.addTask(title)
+                .onFailure { e ->
+                    _errorEvent.emit("Ошибка добавления: ${e.localizedMessage}")
+                }
         }
-
     }
 
 
-    fun deleteTask(task: TaskEntity){
-       viewModelScope.launch{
-           _mistake.value = repository.deleteTask(task)
+
+    fun deleteTask(task: TaskEntity) {
+        viewModelScope.launch {
+            repository.deleteTask(task)
+                .onFailure { e ->
+                    _errorEvent.emit("Ошибка удаления: ${e.localizedMessage}")
+                }
         }
     }
 
     fun updateTask(task: TaskEntity) {
         viewModelScope.launch {
-            _mistake.value =  repository.updateTask(task)
+            repository.updateTask(task).onFailure { e -> _errorEvent.emit( "Ошибка обновления: ${e.localizedMessage}") }
         }
     }
 
+
     fun toggleTaskCompletion(task: TaskEntity, isCompleted: Boolean) {
-        viewModelScope.launch{
-            val updatedTask = task.copy(isCompleted = isCompleted)
-            _mistake.value =  repository.updateTask(updatedTask)
+        viewModelScope.launch {
+            repository.toggleTaskCompletion(task, isCompleted)
+                .onFailure { e ->
+                    _errorEvent.emit("Ошибка обновления: ${e.localizedMessage}")
+                }
         }
     }
 
     fun deleteAllTasks() {
         viewModelScope.launch {
-            _mistake.value =  repository.deleteAllTasks()
+            repository.deleteAllTasks()
+                .onFailure { e ->
+                    _errorEvent.emit("Ошибка удаления всех: ${e.localizedMessage}")
+                }
         }
     }
     }
@@ -232,7 +244,7 @@ class MainViewModel (
 <br>
 
 ```kotlin
-    class MainViewModelFactory(
+        class MainViewModelFactory(
         private val repository: TaskRepository
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -243,6 +255,7 @@ class MainViewModel (
             throw IllegalArgumentException("Unknown ViewModel class")
         }
     }
+
 ```
 
 <br>
@@ -272,6 +285,7 @@ import com.example.myapplication.data.TaskRepository
 import com.example.myapplication.data.TaskRepositoryImpl
 import com.example.myapplication.database.AppDatabase
 import com.example.todoapp.database.TaskEntity
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -316,10 +330,7 @@ class MainActivity : AppCompatActivity() {
             if (result.resultCode== RESULT_CANCELED){
                 viewModel.deleteTask(result.data?.getParcelableExtra<TaskEntity>("Task") ?: viewModel.tasks.value[0])
                 adapter.updateData(viewModel.tasks.value)
-                if (!viewModel.mistake.value){
-                    Toast.makeText(this, "Что то пошло не так....", Toast.LENGTH_SHORT).show()
-                    viewModel.reloadMistakes()
-                }
+
 
                 adapter.notifyItemRemoved(result.data?.getIntExtra("pos", 0) ?: 0)
                 Toast.makeText(this, "Задача удалена", Toast.LENGTH_SHORT).show()
@@ -328,10 +339,7 @@ class MainActivity : AppCompatActivity() {
                val newTask = result.data?.getParcelableExtra<TaskEntity>("Task") ?:viewModel.tasks.value[result.data?.getIntExtra("pos", 0) ?: 0]
                 newTask.title = result.data?.getStringExtra("nw") ?: ""
                 viewModel.updateTask(newTask)
-                if (!viewModel.mistake.value){
-                    Toast.makeText(this, "Что то пошло не так....", Toast.LENGTH_SHORT).show()
-                    viewModel.reloadMistakes()
-                }
+
                 adapter.updateData(viewModel.tasks.value)
                Toast.makeText(this, "Задача изменена", Toast.LENGTH_SHORT).show()
             }
@@ -345,10 +353,7 @@ class MainActivity : AppCompatActivity() {
 
             { position,task ->
                 viewModel.deleteTask(task)
-                if (!viewModel.mistake.value){
-                    Toast.makeText(this, "Что то пошло не так....", Toast.LENGTH_SHORT).show()
-                    viewModel.reloadMistakes()
-                }
+
                 adapter.updateData(viewModel.tasks.value)
                 adapter.notifyItemRemoved(position)
                 Toast.makeText(this, "Задача удалена", Toast.LENGTH_SHORT).show()
@@ -356,10 +361,7 @@ class MainActivity : AppCompatActivity() {
             ///
             { chk,task, done->
                 viewModel.toggleTaskCompletion(task,chk)
-                if (!viewModel.mistake.value){
-                    Toast.makeText(this, "Что то пошло не так....", Toast.LENGTH_SHORT).show()
-                    viewModel.reloadMistakes()
-                }
+
                },
 
             {position, Task ->
@@ -380,16 +382,20 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
+        lifecycleScope.launch {
+            viewModel.errorEvent.collectLatest { message ->
+                Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
+            }
+        }
+
+
+
         // Добавление задачи
         buttonAddTask.setOnClickListener {
             val task = editTextTask.text.toString()
             val header = editTextheader.text.toString()
             if (task.isNotBlank()) {
                 viewModel.addTask(TaskEntity(header=header, title =task))
-                if (!viewModel.mistake.value){
-                    Toast.makeText(this, "Что то пошло не так....", Toast.LENGTH_SHORT).show()
-                    viewModel.reloadMistakes()
-                }
                 editTextTask.text.clear()
                 editTextheader.text.clear()
             } else {
@@ -401,10 +407,6 @@ class MainActivity : AppCompatActivity() {
             val header = searchedd.text.toString()
             if (header.isNotBlank()) {
                 viewModel.loadTasksForCategory(header)
-                if (!viewModel.mistake.value){
-                    Toast.makeText(this, "Что то пошло не так....", Toast.LENGTH_SHORT).show()
-                    viewModel.reloadMistakes()
-                }
                 tasks = viewModel.needed.value
                 for ( t in tasks){
                     Toast.makeText(this, t.title, Toast.LENGTH_SHORT).show()
@@ -414,19 +416,14 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Введите задачу", Toast.LENGTH_SHORT).show()
             }
         }
-        var mstk = true
+        
         mbutton.setOnClickListener {
-            viewModel.addTasktst(TaskEntity(
+            viewModel.addTask(TaskEntity(
                 id = 1,
                 header = "test",
                 title = "Tsee",
                 isCompleted = true,
                 createdTime = System.currentTimeMillis()))
-
-            if (!viewModel.mistake.value){
-                Toast.makeText(this,"Что-то Пошло не так", Toast.LENGTH_SHORT).show()
-                viewModel.reloadMistakes()
-            }
 
         }
 
@@ -483,4 +480,5 @@ ViewModel не изменится, если репозиторий коррек�
 
 <br>
 
-Выводы - освоенны некоторые базовые архитектурные элементы, провели рефактор готового приложения 
+## Выводы
+- освоенны некоторые базовые архитектурные элементы, провели рефактор готового приложения 
