@@ -1,87 +1,63 @@
-# Лабораторная работа №12
-## Выполнение длительных операций (симуляция загрузки) с использованием viewModelScope
+<div align="center">
 
-**Длительность:** 1 час 30 минут  
-**Цель работы:** Научиться выполнять длительные операции в фоновом потоке с использованием корутин и `viewModelScope`, управлять состоянием загрузки в UI, реализовать имитацию загрузки данных и обработку ошибок.
+**МИНИСТЕРСТВО НАУКИ И ВЫСШЕГО ОБРАЗОВАНИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ**  
+**ФЕДЕРАЛЬНОЕ ГОСУДАРСТВЕННОЕ БЮДЖЕТНОЕ ОБРАЗОВАТЕЛЬНОЕ УЧРЕЖДЕНИЕ ВЫСШЕГО ОБРАЗОВАНИЯ**  
+**«САХАЛИНСКИЙ ГОСУДАРСТВЕННЫЙ УНИВЕРСИТЕТ»**
 
----
+<br>
+<br>
 
-## 1. Теоретическая справка
+Институт естественных наук и техносферной безопасности  
+Кафедра информатики  
+Бычков Дмитрий Николаевич
 
-### 1.1. Длительные операции и UI
-Любые длительные операции (сетевые запросы, работа с базой данных, сложные вычисления) не должны выполняться в главном потоке (UI-потоке), так как это приводит к зависанию интерфейса. В Android для асинхронной работы рекомендуется использовать корутины Kotlin.
+<br>
+<br>
+<br>
+<br>
 
-### 1.2. viewModelScope
-`viewModelScope` — это встроенная область корутин, привязанная к жизненному циклу ViewModel. Она автоматически отменяет все запущенные в ней корутины при уничтожении ViewModel. Это предотвращает утечки памяти и ненужную работу.
+Лабораторная работа №12
+Выполнение длительных операций (симуляция загрузки) с использованием viewModelScope
+01.03.02 Прикладная математика и информатика  
+3 Курс
 
-Пример запуска корутины:
-```kotlin
-viewModelScope.launch {
-    // длительная операция
-}
-```
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
 
-### 1.3. Управление состоянием загрузки
-Для отображения прогресса загрузки или состояния ошибки в UI используется подход с хранением состояния в ViewModel (например, с помощью `StateFlow` или `LiveData`). Обычно создают sealed class, описывающий все возможные состояния экрана:
+<div align="right">
+Научный руководитель
+<br>
+Соболев Евгений Игоревич
+</div>
 
-```kotlin
-sealed class UiState {
-    object Loading : UiState()
-    data class Success(val data: List<TaskEntity>) : UiState()
-    data class Error(val message: String) : UiState()
-}
-```
+<br>
+<br>
+<br>
 
-В Compose можно реагировать на изменения состояния и отображать соответствующий UI. В XML-разметке можно использовать `ViewSwitcher`, `ProgressBar` и другие элементы.
+г. Южно-Сахалинск  
+2026 г.
 
-### 1.4. Симуляция задержки
-Для имитации длительной операции (например, сетевого запроса) используем функцию `delay()`:
+</div>
+<br>
+<br>
 
-```kotlin
-viewModelScope.launch {
-    _uiState.value = UiState.Loading
-    delay(2000) // имитация загрузки
-    val data = repository.getAllTasks().first() // получаем данные
-    _uiState.value = UiState.Success(data)
-}
-```
+Листинг Uistate
 
-### 1.5. Обработка ошибок
-Корутины позволяют обрабатывать исключения с помощью `try-catch`:
-
-```kotlin
-viewModelScope.launch {
-    try {
-        // ...
-    } catch (e: Exception) {
-        _uiState.value = UiState.Error(e.message ?: "Unknown error")
-    }
-}
-```
-
----
-
-## 2. Оборудование и программное обеспечение
-
-- Персональный компьютер с ОС Windows / macOS / Linux.
-- Android Studio с проектом `TodoApp`, который был разработан в лабораторной работе №11 (с Repository, Room, ViewModel).
-- Эмулятор или реальное устройство.
-
----
-
-## 3. Порядок выполнения работы
-
-### Этап 1. Подготовка проекта (5 мин)
-
-Откройте проект `TodoApp`, созданный в лабораторной работе №11. Убедитесь, что проект компилируется и работает корректно: задачи загружаются из БД, добавляются, удаляются.
-
-### Этап 2. Создание sealed class для состояний (10 мин)
-
-Создайте новый файл `UiState.kt` в пакете `com.example.todoapp.ui` (или рядом с ViewModel):
+<br>
 
 ```kotlin
-package com.example.todoapp.ui
-
+package com.example.myapplication.ui
 import com.example.todoapp.database.TaskEntity
 
 sealed class TasksUiState {
@@ -91,279 +67,562 @@ sealed class TasksUiState {
 }
 ```
 
-### Этап 3. Модификация ViewModel для использования состояний (20 мин)
-
-Измените `MainViewModel`, чтобы он хранил состояние экрана (`TasksUiState`) вместо прямого списка задач. Также добавьте методы для загрузки данных и симуляции длительной операции.
+<br>
+Листинг mainViewModel
+<br>
 
 ```kotlin
-package com.example.todoapp.ui.theme
+package com.example.myapplication
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.todoapp.data.repository.TaskRepository
+import com.example.myapplication.data.TaskRepository
+import com.example.myapplication.ui.TasksUiState
 import com.example.todoapp.database.TaskEntity
-import com.example.todoapp.ui.TasksUiState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class MainViewModel(
+class MainViewModel (
     private val repository: TaskRepository
-) : ViewModel() {
+): ViewModel() {
 
+    private val _errorEvent = MutableSharedFlow<String>()
+    val errorEvent = _errorEvent.asSharedFlow()
     private val _uiState = MutableStateFlow<TasksUiState>(TasksUiState.Loading)
     val uiState: StateFlow<TasksUiState> = _uiState.asStateFlow()
 
-    init {
+    var needed = MutableStateFlow<List<TaskEntity>>(emptyList())
+    init{
         loadTasks()
     }
-
-    fun loadTasks() {
+    fun loadTasks(){
         viewModelScope.launch {
             _uiState.value = TasksUiState.Loading
             try {
-                // Имитация длительной загрузки (например, сетевой запрос)
-                delay(2000) // 2 секунды
-                
-                // Получаем данные из репозитория
-                val tasks = repository.getAllTasks()
-                // Так как getAllTasks() возвращает Flow, нужно собрать первый элемент
-                // Для простоты предположим, что у нас есть suspend метод в репозитории
-                // Но пока оставим как есть, но в репозитории должен быть метод getTasks() suspend?
-                
-                // На самом деле, чтобы получить текущий список из Flow, можно использовать .first()
-                // Но мы пока не будем усложнять: добавим в репозиторий suspend метод
-                // Для этой лабораторной изменим репозиторий, добавив suspend fun getTasksOnce()
-                
-                // Пока упростим: будем использовать имеющийся Flow, но для этого нужно собрать первый элемент
-                // Лучше добавить отдельный метод в репозиторий
-                // Временно используем репозиторий напрямую
+                delay(4000) // 4 секунды
+                val tasks = repository.getTasksOnce()
+                _uiState.value = TasksUiState.Success(tasks)
+
             } catch (e: Exception) {
                 _uiState.value = TasksUiState.Error(e.message ?: "Ошибка загрузки")
             }
         }
     }
 
-    fun addTask(title: String) {
-        viewModelScope.launch {
-            repository.addTask(title)
-            // После добавления можно перезагрузить список или оптимистично обновить
-            loadTasks()
+
+    val tasks: StateFlow<List<TaskEntity>> = repository.getAllTasks().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(3000),
+
+        initialValue = emptyList()
+    )
+    fun loadTasksForCategory(category: String) {
+        viewModelScope.launch{
+            val par = repository.loadTaskByHeader(category)
         }
     }
 
+    fun addTask(title: TaskEntity) {
+        viewModelScope.launch {
+            repository.addTask(title)
+                .onFailure { e ->
+                    _errorEvent.emit("Ошибка добавления: ${e.localizedMessage}")
+                }
+        }
+    }
     fun deleteTask(task: TaskEntity) {
         viewModelScope.launch {
             repository.deleteTask(task)
-            loadTasks()
+                .onFailure { e ->
+                    _errorEvent.emit("Ошибка удаления: ${e.localizedMessage}")
+                }
+        }
+    }
+
+    fun updateTask(task: TaskEntity) {
+        viewModelScope.launch {
+            repository.updateTask(task).onFailure { e -> _errorEvent.emit( "Ошибка обновления: ${e.localizedMessage}") }
         }
     }
 
     fun toggleTaskCompletion(task: TaskEntity, isCompleted: Boolean) {
         viewModelScope.launch {
             repository.toggleTaskCompletion(task, isCompleted)
-            loadTasks()
+                .onFailure { e ->
+                    _errorEvent.emit("Ошибка обновления: ${e.localizedMessage}")
+                }
+        }
+    }
+
+    fun deleteAllTasks() {
+        viewModelScope.launch {
+            repository.deleteAllTasks()
+                .onFailure { e ->
+                    _errorEvent.emit("Ошибка удаления всех: ${e.localizedMessage}")
+                }
         }
     }
 
     fun refresh() {
         loadTasks()
     }
-}
+    }
 ```
 
-**Важно:** В коде выше мы использовали `loadTasks()` после каждой операции, что неэффективно, но для учебных целей допустимо. В реальном проекте лучше обновлять список через Flow из репозитория, но мы сейчас имитируем загрузку, поэтому перезагружаем.
+<br>
+Листинг taskReposytory
 
-### Этап 4. Добавление suspend-метода в репозиторий (10 мин)
-
-Чтобы получить список задач однократно (для состояния Success), добавим в `TaskRepository` и `TaskRepositoryImpl` новый метод `suspend fun getTasksOnce(): List<TaskEntity>`.
-
-В `TaskRepository.kt`:
 ```kotlin
 interface TaskRepository {
-    // ... существующие методы
+    fun getAllTasks(): Flow<List<TaskEntity>>
+    suspend fun addTask(task: TaskEntity): Result<Unit>
+
+    suspend fun deleteTask(task: TaskEntity): Result<Unit>
+    suspend fun updateTask(task: TaskEntity): Result<Unit>
+    suspend fun toggleTaskCompletion(task: TaskEntity, isCompleted: Boolean): Result<Unit>
+    suspend fun deleteAllTasks(): Result<Unit>
+    suspend fun loadTaskByHeader(header: String): List<TaskEntity>
     suspend fun getTasksOnce(): List<TaskEntity>
 }
 ```
 
-В `TaskRepositoryImpl.kt`:
-```kotlin
-override suspend fun getTasksOnce(): List<TaskEntity> {
-    return taskDao.getAllTasks().first() // first() приостановится до первого элемента
-}
-```
-
-Не забудьте импортировать `kotlinx.coroutines.flow.first`.
-
-### Этап 5. Обновление ViewModel с использованием getTasksOnce (5 мин)
-
-Замените в `loadTasks()` получение данных:
+<br>
+Листинг taskReposytoryIMPL
+<br>
 
 ```kotlin
-val tasks = repository.getTasksOnce()
-_uiState.value = TasksUiState.Success(tasks)
-```
 
-Весь метод теперь:
+class TaskRepositoryImpl(
+    private val taskDao: TaskDao
+) : TaskRepository {
 
-```kotlin
-fun loadTasks() {
-    viewModelScope.launch {
-        _uiState.value = TasksUiState.Loading
-        try {
-            delay(2000) // симуляция задержки
-            val tasks = repository.getTasksOnce()
-            _uiState.value = TasksUiState.Success(tasks)
+    override fun getAllTasks(): Flow<List<TaskEntity>> = taskDao.getAllTasks()
+
+
+    override suspend fun addTask(task: TaskEntity): Result<Unit> {
+        return try {
+            val task = TaskEntity(id = task.id,title = task.title, header =task.header)
+            taskDao.insertTask(task)
+            Result.success(Unit)
         } catch (e: Exception) {
-            _uiState.value = TasksUiState.Error(e.message ?: "Ошибка загрузки")
+            Result.failure(e)
         }
     }
+
+    override suspend fun deleteTask(task: TaskEntity): Result<Unit> {
+        return try {
+            taskDao.deleteTask(task)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+
+    override suspend fun updateTask(task: TaskEntity): Result<Unit> {
+        return try {
+            taskDao.updateTask(task)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun toggleTaskCompletion(task: TaskEntity, isCompleted: Boolean): Result<Unit> {
+        return try {
+            val updatedTask = task.copy(isCompleted = isCompleted)
+            taskDao.updateTask(updatedTask)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+
+    override suspend fun deleteAllTasks(): Result<Unit> {
+        return try {
+            taskDao.deleteAll()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun loadTaskByHeader(header: String): List<TaskEntity>{
+
+        val lst = taskDao.byheader(header)
+        return lst
+    }
+
+    override suspend fun getTasksOnce(): List<TaskEntity> {
+        return taskDao.getAllTasks().first() // first() приостановится до первого элемента
+    }
+
+
+
 }
+
 ```
 
-### Этап 6. Обновление UI в MainActivity (20 мин)
-
-Теперь нужно изменить `MainActivity`, чтобы он реагировал на состояние `uiState`. Мы будем использовать подход с отображением разных view в зависимости от состояния.
-
-Добавим в `activity_main.xml` контейнер для переключения между прогресс-баром, списком и сообщением об ошибке. Можно использовать `FrameLayout` или `ViewSwitcher`. Для простоты используем `FrameLayout` и показываем/скрываем view.
-
-Пример разметки (фрагмент):
+<br>
+Листинг activity_main.xml
+<br>
 
 ```xml
-<FrameLayout
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/main"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewTasks"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+    <!-- Поле ввода и кнопка добавления (как в Лаб.5) -->
+    <EditText
+        android:id="@+id/editTextheader"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone"/>
-
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:visibility="gone"/>
+        android:layout_marginBottom="8dp"
+        android:hint="Введите заголовок" />
 
-    <TextView
-        android:id="@+id/textError"
-        android:layout_width="wrap_content"
+    <EditText
+        android:id="@+id/editTextTask"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="Ошибка загрузки"
-        android:visibility="gone"/>
+        android:layout_marginBottom="8dp"
+        android:hint="Введите задачу" />
 
-</FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="70dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/buttonAddTask"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:layout_weight="1"
+            android:text="Добавить задачу" />
+
+        <Button
+            android:id="@+id/buttonsearch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:layout_weight="1"
+            android:text="Поиск" />
+
+        <Button
+            android:id="@+id/buttonrefresh"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Обновить" />
+
+    </LinearLayout>
+    <EditText
+        android:id="@+id/editTextSearch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:hint="Введите" />
+
+    <!-- RecyclerView для списка задач -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewTasks"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"/>
+        <!-- Shimmer-контейнер для скелетонов -->
+        <com.facebook.shimmer.ShimmerFrameLayout
+            android:id="@+id/shimmerLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <include layout="@layout/skeleton_item_task" />
+                <include layout="@layout/skeleton_item_task" />
+                <include layout="@layout/skeleton_item_task" />
+                <include layout="@layout/skeleton_item_task" />
+                <include layout="@layout/skeleton_item_task" />
+                <include layout="@layout/skeleton_item_task" />
+
+            </LinearLayout>
+        </com.facebook.shimmer.ShimmerFrameLayout>
+
+        <TextView
+            android:id="@+id/textError"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="Ошибка загрузки"
+            android:visibility="gone"/>
+
+    </FrameLayout>
+
+</LinearLayout>
 ```
 
-Также добавьте кнопку "Обновить" (например, в toolbar или отдельную кнопку).
-
-В `MainActivity` подпишитесь на `uiState` и обновляйте видимость элементов и данные адаптера.
+<br>
+Листинг main
+<br>
 
 ```kotlin
-lifecycleScope.launch {
-    repeatOnLifecycle(Lifecycle.State.STARTED) {
-        viewModel.uiState.collect { state ->
-            when (state) {
-                is TasksUiState.Loading -> {
-                    findViewById<RecyclerView>(R.id.recyclerViewTasks).visibility = View.GONE
-                    findViewById<ProgressBar>(R.id.progressBar).visibility = View.VISIBLE
-                    findViewById<TextView>(R.id.textError).visibility = View.GONE
+package com.example.myapplication
+import android.content.Intent
+import android.os.Bundle
+import android.view.View
+import android.widget.Button
+import android.widget.EditText
+import android.widget.ProgressBar
+import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.myapplication.data.TaskRepository
+import com.example.myapplication.data.TaskRepositoryImpl
+import com.example.myapplication.database.AppDatabase
+import com.example.myapplication.ui.TasksUiState
+import com.example.todoapp.database.TaskEntity
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+
+class MainActivity : AppCompatActivity() {
+
+    private var tasks = emptyList<TaskEntity>()
+    private lateinit var adapter: TaskAdapter
+    private lateinit var  Detailslauncher: ActivityResultLauncher<Intent>
+    var  ready = 0
+    class MainViewModelFactory(
+        private val repository: TaskRepository
+    ) : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
+                @Suppress("UNCHECKED_CAST")
+                return MainViewModel(repository) as T
+            }
+            throw IllegalArgumentException("Unknown ViewModel class")
+        }
+    }
+
+    private val database by lazy { AppDatabase.getInstance(this) }
+    private val repository by lazy { TaskRepositoryImpl(database.taskDao()) }
+    private val viewModel: MainViewModel by viewModels {
+        MainViewModelFactory(repository)
+    }
+
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        val editTextTask = findViewById<EditText>(R.id.editTextTask)
+        val editTextheader = findViewById<EditText>(R.id.editTextheader)
+        val buttonAddTask = findViewById<Button>(R.id.buttonAddTask)
+        val recyclerView = findViewById<RecyclerView>(R.id.recyclerViewTasks)
+        val searchbutton = findViewById<Button>(R.id.buttonsearch)
+        val searchedd = findViewById<EditText>(R.id.editTextSearch)
+        val mbutton = findViewById<Button>(R.id.buttonrefresh)
+            // Создание лаунчера DetailActictivity, с возвратом разных result code
+        Detailslauncher  = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
+                result ->
+            if (result.resultCode== RESULT_CANCELED){
+                viewModel.deleteTask(result.data?.getParcelableExtra<TaskEntity>("Task") ?: viewModel.tasks.value[0])
+                adapter.updateData(viewModel.tasks.value)
+                adapter.notifyItemRemoved(result.data?.getIntExtra("pos", 0) ?: 0)
+                Toast.makeText(this, "Задача удалена", Toast.LENGTH_SHORT).show()
+            }
+            if (result.resultCode == 3){
+               val newTask = result.data?.getParcelableExtra<TaskEntity>("Task") ?:viewModel.tasks.value[result.data?.getIntExtra("pos", 0) ?: 0]
+                newTask.title = result.data?.getStringExtra("nw") ?: ""
+                viewModel.updateTask(newTask)
+
+                adapter.updateData(viewModel.tasks.value)
+               Toast.makeText(this, "Задача изменена", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+
+        // Настройка RecyclerView
+        recyclerView.layoutManager = LinearLayoutManager(this)
+
+        adapter = TaskAdapter(tasks,
+
+            { position,task ->
+                viewModel.deleteTask(task)
+                adapter.updateData(viewModel.tasks.value)
+                adapter.notifyItemRemoved(position)
+                Toast.makeText(this, "Задача удалена", Toast.LENGTH_SHORT).show()
+            },
+            ///
+            { chk,task, done->
+                viewModel.toggleTaskCompletion(task,chk)
+               },
+
+            {position, Task ->
+                val intent = Intent(this, DetailActivity::class.java)
+                intent.putExtra("Task", Task)
+                intent.putExtra("pos",position)
+                Detailslauncher.launch(intent)
+
+            }
+        )
+        recyclerView.adapter = adapter
+
+            lifecycleScope.launch {
+                repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    viewModel.tasks.collect { tasks ->
+                        adapter.updateData(tasks)
+                    }
+
                 }
-                is TasksUiState.Success -> {
-                    findViewById<RecyclerView>(R.id.recyclerViewTasks).visibility = View.VISIBLE
-                    findViewById<ProgressBar>(R.id.progressBar).visibility = View.GONE
-                    findViewById<TextView>(R.id.textError).visibility = View.GONE
-                    adapter.updateData(state.tasks)
-                }
-                is TasksUiState.Error -> {
-                    findViewById<RecyclerView>(R.id.recyclerViewTasks).visibility = View.GONE
-                    findViewById<ProgressBar>(R.id.progressBar).visibility = View.GONE
-                    findViewById<TextView>(R.id.textError).visibility = View.VISIBLE
-                    findViewById<TextView>(R.id.textError).text = state.message
+            }
+
+        lifecycleScope.launch {
+            viewModel.errorEvent.collectLatest { message ->
+                Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
+            }
+        }
+
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
+                    when (state) {
+                        is TasksUiState.Loading -> {
+                            findViewById<RecyclerView>(R.id.recyclerViewTasks).visibility = View.GONE
+                            findViewById<com.facebook.shimmer.ShimmerFrameLayout>(R.id.shimmerLayout).apply {
+                                visibility = View.VISIBLE
+                                startShimmer()   // запуск анимации
+                            }
+                            findViewById<TextView>(R.id.textError).visibility = View.GONE
+                        }
+                        is TasksUiState.Success -> {
+                            findViewById<com.facebook.shimmer.ShimmerFrameLayout>(R.id.shimmerLayout).apply {
+                                stopShimmer()    // остановка анимации
+                                visibility = View.GONE
+                            }
+                            findViewById<RecyclerView>(R.id.recyclerViewTasks).apply {
+                                visibility = View.VISIBLE
+                            }
+                            findViewById<TextView>(R.id.textError).visibility = View.GONE
+                            adapter.updateData(state.tasks)
+                        }
+                        is TasksUiState.Error -> {
+                            findViewById<com.facebook.shimmer.ShimmerFrameLayout>(R.id.shimmerLayout).apply {
+                                stopShimmer()
+                                visibility = View.GONE
+                            }
+                            findViewById<RecyclerView>(R.id.recyclerViewTasks).visibility = View.GONE
+                            findViewById<TextView>(R.id.textError).apply {
+                                visibility = View.VISIBLE
+                                text = state.message
+                            }
+                        }
+                    }
                 }
             }
         }
+
+        // Добавление задачи
+        buttonAddTask.setOnClickListener {
+            val task = editTextTask.text.toString()
+            val header = editTextheader.text.toString()
+            if (task.isNotBlank()) {
+                viewModel.addTask(TaskEntity(header=header, title =task))
+                editTextTask.text.clear()
+                editTextheader.text.clear()
+            } else {
+                Toast.makeText(this, "Введите задачу", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        searchbutton.setOnClickListener {
+            val header = searchedd.text.toString()
+            if (header.isNotBlank()) {
+                viewModel.loadTasksForCategory(header)
+                tasks = viewModel.needed.value
+                for ( t in tasks){
+                    Toast.makeText(this, t.title, Toast.LENGTH_SHORT).show()
+                }
+                searchedd.text.clear()
+            } else {
+                Toast.makeText(this, "Введите задачу", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        findViewById<Button>(R.id.buttonrefresh).setOnClickListener {
+            viewModel.refresh()
+        }
+
+        }
     }
-}
 ```
 
-Добавьте обработку кнопки "Обновить":
+<br>
+Загрузка
 
-```kotlin
-findViewById<Button>(R.id.buttonRefresh).setOnClickListener {
-    viewModel.refresh()
-}
-```
 
-### Этап 7. Запуск и тестирование (10 мин)
+<img width="341" height="711" alt="image" src="https://github.com/user-attachments/assets/ceba2d18-f15c-40bb-b0b9-2b0f8227caf2" />
 
-Запустите приложение. При старте вы должны увидеть `ProgressBar` в течение 2 секунд, затем список задач. Попробуйте добавить задачу — снова появится прогресс, затем обновлённый список. Нажмите "Обновить" — тоже прогресс.
+<img width="353" height="671" alt="image" src="https://github.com/user-attachments/assets/65d7be1d-d07e-4bbe-86cd-4bcac1890133" />
 
-Для проверки ошибки можно временно сломать репозиторий (например, выбросить исключение в `getTasksOnce`).
+<img width="356" height="714" alt="image" src="https://github.com/user-attachments/assets/22a44911-5005-4512-b7c4-82e15a05780e" />
 
-### Этап 8. Дополнительные улучшения (оставшееся время, 10 мин)
+<br>
 
-- Добавьте обработку ошибок сети: покажите сообщение и кнопку "Повторить".
-- Вместо полной перезагрузки списка после добавления задачи, используйте оптимистичное обновление (сразу добавляем в список, но отправляем запрос в БД).
-- Добавьте анимацию перехода между состояниями.
+## 1 Почему длительные операции нельзя выполнять в главном потоке?
+Главный поток отвечает за отрисовку UI и обработку событий. Долгая операция блокирует его, интерфейс зависает, система может показать диалог «Приложение не отвечает» (ANR).
 
----
+<br>
 
-## 4. Индивидуальные задания (вариативно)
+## 2 Что такое viewModelScope и как он связан с жизненным циклом ViewModel?
+viewModelScope — встроенный CoroutineScope, привязанный к ViewModel. Все корутины, запущенные в нём, автоматически отменяются при очистке ViewModel (onCleared()), предотвращая утечки памяти и лишнюю работу.
 
-Выберите одно из заданий для самостоятельной реализации:
+<br>
 
-1. **Оптимистичное обновление**  
-   Измените ViewModel так, чтобы при добавлении задачи она сразу добавлялась в список (без показа загрузки), а фоновая операция выполнялась параллельно. Если операция завершилась ошибкой, откатываем изменение и показываем ошибку.
+## 3 Какие преимущества даёт использование sealed class для представления состояний UI?
+Ограниченный набор состояний (Loading, Success, Error) гарантирует полную обработку всех вариантов в when (компилятор проверит). Каждое состояние может содержать только ему нужные данные, что делает управление UI строгим и безопасным.
 
-2. **Pull-to-refresh**  
-   Добавьте SwipeRefreshLayout для обновления списка. При свайпе вниз вызывайте `viewModel.refresh()` и показывайте индикатор обновления.
+<br>
 
-3. **Загрузка с сохранением кэша**  
-   Реализуйте стратегию: сначала показываем данные из БД (мгновенно), а затем в фоне обновляем с сервера (с имитацией задержки). После обновления список обновляется. Для этого нужен Flow из БД и отдельная загрузка из сети.
+## 4 Как имитировать задержку в корутине?
+Вызовом функции delay(миллисекунды). Она приостанавливает корутину, не блокируя поток, и возобновляет её по истечении указанного времени.
 
-4. **Анимация скелетона**  
-   Вместо простого ProgressBar используйте скелетон-эффект (Shimmer). Для XML можно использовать библиотеку Facebook Shimmer, для Compose — встроенные средства.
+<br>
 
----
+## 5 Как обрабатывать ошибки при выполнении корутин?
+Оборачивать код внутри launch (или другого билдера корутин) в блок try-catch. В catch можно перехватить исключение и изменить состояние UI на Error, показав сообщение пользователю.
 
-## 5. Контрольные вопросы
+<br>
 
-1. Почему длительные операции нельзя выполнять в главном потоке?
-2. Что такое `viewModelScope` и как он связан с жизненным циклом ViewModel?
-3. Какие преимущества даёт использование sealed class для представления состояний UI?
-4. Как имитировать задержку в корутине?
-5. Как обрабатывать ошибки при выполнении корутин?
+## Выводы
 
----
-
-## 6. Требования к отчёту
-
-Отчёт должен содержать:
-- Титульный лист с названием работы, ФИО, группой.
-- Цель работы.
-- Листинг `UiState.kt`.
-- Листинг обновлённого `MainViewModel.kt`.
-- Листинг обновлённого `TaskRepository.kt` и `TaskRepositoryImpl.kt` (с новым методом).
-- Листинг изменений в `activity_main.xml` и `MainActivity.kt`.
-- Скриншоты приложения в состояниях загрузки, успеха и ошибки.
-- Ответы на контрольные вопросы.
-- Вывод по работе.
-
----
-
-## 7. Возможные ошибки и их решение
-
-- **Ошибка "Flow<T> has no method 'first()' в suspend-функции** – убедитесь, что импортирован `kotlinx.coroutines.flow.first`.
-- **ProgressBar не показывается** – проверьте видимость и правильность ID в разметке.
-- **После добавления задачи список не обновляется** – убедитесь, что в `addTask` вызывается `loadTasks()` и что `getTasksOnce()` возвращает актуальные данные.
-- **Исключение при получении данных** – обработайте `try-catch` и выведите состояние ошибки.
-
----
-
-**Успешной работы!**
+В ходе выполнения лабораторной работы я научился использовать viewModelScope для запуска длительных операций в фоновом потоке, управлять состояниями пользовательского интерфейса с помощью sealed class и StateFlow, имитировать задержки с помощью delay(), обрабатывать ошибки в корутинах. 
