@@ -487,6 +487,10 @@ Retrofit — это типобезопасный HTTP-клиент для Androi
 
 Автоматическое преобразование JSON (или XML) в Kotlin-объекты с помощью подключаемых конвертеров (например, GsonConverterFactory).
 
+Аннотации:
+Http аннотации: @GET, @POST, @PUT, @DELETE, @PATCH, @HEAD, @OPTIONS, @HTTP
+@Query - параметр GET
+
 <br>
 
 ## 2 Почему сетевые запросы нельзя выполнять в главном потоке?
